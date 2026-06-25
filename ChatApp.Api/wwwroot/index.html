@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ChatApp</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
+</head>
+<body class="light-theme">
+
+    <!-- Auth Screen -->
+    <div id="authScreen" class="auth-screen">
+        <div class="auth-card">
+            <h1>ChatApp</h1>
+            <div class="auth-subtitle">Clean, real-time messaging solution</div>
+            
+            <div class="auth-tabs">
+                <button id="tabLogin" class="active">Login</button>
+                <button id="tabRegister">Register</button>
+            </div>
+
+            <!-- Login Form -->
+            <form id="loginForm">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="loginUserName" required autocomplete="username" />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" required autocomplete="current-password" />
+                </div>
+                <button type="submit" class="btn btn-block">Login</button>
+                <div id="loginError" class="error"></div>
+            </form>
+
+            <!-- Register Form -->
+            <form id="registerForm" style="display:none;">
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="regUserName" required autocomplete="username" />
+                </div>
+                <div class="form-group">
+                    <label>Display Name</label>
+                    <input type="text" id="regDisplayName" required />
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="regEmail" required autocomplete="email" />
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="regPassword" required minlength="6" autocomplete="new-password" />
+                </div>
+                <button type="submit" class="btn btn-block">Register</button>
+                <div id="regError" class="error"></div>
+                <div id="regSuccess" class="success"></div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Main App -->
+    <div id="app" class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <button class="hamburger-btn" id="btnHamburger" title="Menu">
+                    <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/></svg>
+                </button>
+                <input type="text" id="userSearch" placeholder="Search contacts or groups..." />
+            </div>
+
+            <div class="sidebar-list" id="sidebarList"></div>
+        </aside>
+
+        <!-- Chat Pane -->
+        <main class="chat-pane" id="chatPane">
+            <div class="empty-state">Select a contact or group to start chatting.</div>
+        </main>
+    </div>
+
+    <!-- Drawer Slide-out Overlay -->
+    <div class="drawer-overlay" id="drawerOverlay"></div>
+
+    <!-- Slide-out Drawer (Telegram style) -->
+    <div class="drawer" id="drawer">
+        <div class="drawer-profile-banner">
+            <div class="drawer-avatar" id="drawerAvatar"></div>
+            <div class="drawer-user-info">
+                <div class="drawer-name" id="drawerDisplayName">User Name</div>
+                <div class="drawer-status" id="drawerPresenceStatus">Set presence status</div>
+            </div>
+        </div>
+        <div class="drawer-menu">
+            <a id="drawerMenuProfile"><span class="menu-icon"></span>My Profile</a>
+            <a id="drawerMenuNewGroup"><span class="menu-icon"></span>New Group</a>
+            <a id="drawerMenuContacts"><span class="menu-icon"></span>Contacts</a>
+            <a id="drawerMenuSettings"><span class="menu-icon"></span>Settings</a>
+            <div class="drawer-menu-item toggle-item">
+                <a><span class="menu-icon"></span>Night Mode</a>
+                <label class="switch">
+                    <input type="checkbox" id="nightModeToggle" />
+                    <span class="slider"></span>
+                </label>
+            </div>
+        </div>
+        <div class="drawer-footer">
+            Web_ChatApp<br>
+            Version 1.0.0 – About
+        </div>
+    </div>
+
+    <!-- Message Context Menu -->
+    <div class="msg-context-menu" id="msgContextMenu">
+        <a id="msgCtxReply"><span class="menu-icon"></span> Reply</a>
+        <a id="msgCtxEdit"><span class="menu-icon"></span> Edit Message</a>
+        <a id="msgCtxCopy"><span class="menu-icon"></span> Copy Text</a>
+        <a id="msgCtxPin"><span class="menu-icon"></span> Pin Message</a>
+        <a id="msgCtxDelete" class="danger"><span class="menu-icon"></span> Delete Message</a>
+    </div>
+
+    <!-- Modal Backdrop -->
+    <div id="modalBackdrop" class="modal-backdrop">
+        <div class="modal" id="modalContent"></div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
