@@ -152,7 +152,10 @@ $('nightModeToggle').onchange = (e) => {
 // Drawer Menu Routing
 $('drawerMenuProfile').onclick = () => { closeDrawer(); showEditProfileModal(); };
 $('drawerMenuNewGroup').onclick = () => { closeDrawer(); openNewGroupModal(); };
-$('drawerMenuContacts').onclick = () => { closeDrawer(); selectTab('contacts'); }
+$('drawerMenuContacts').onclick = () => { closeDrawer(); selectTab('contacts'); };
+$('drawerMenuSettings').onclick = () => { closeDrawer(); showSettingsModal(); };
+$('menuLogout').onclick = () => { logout(); };
+
 
 function selectTab(tab) {
     state.activeTab = tab;
@@ -221,9 +224,15 @@ $('registerForm').onsubmit = async (e) => {
 };
 
 function logout() {
-    if (state.connection) state.connection.stop();
+    if (state.connection) {
+        state.connection.stop().catch(err => console.error(err));
+    }
+    
     localStorage.removeItem('chatapp_token');
-    location.reload();
+    state.token = null;
+    state.me = null;
+    
+    window.location.reload();
 }
 
 // Enter App

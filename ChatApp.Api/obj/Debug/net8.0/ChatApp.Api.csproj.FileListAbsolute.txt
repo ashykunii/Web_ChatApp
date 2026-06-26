@@ -332,8 +332,8 @@ C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Python-Web\Web_ChatApp\
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Python-Web\Web_ChatApp\ChatApp.Api\obj\Debug\net8.0\ref\ChatApp.Api.dll
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\bin\Debug\net8.0\appsettings.Development.json
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\bin\Debug\net8.0\appsettings.json
-C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\bin\Debug\net8.0\ChatApp.Api.staticwebassets.endpoints.json
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\bin\Debug\net8.0\ChatApp.Api.staticwebassets.runtime.json
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\bin\Debug\net8.0\ChatApp.Api.staticwebassets.endpoints.json
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\bin\Debug\net8.0\ChatApp.Api.exe
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\bin\Debug\net8.0\ChatApp.Api.deps.json
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\bin\Debug\net8.0\ChatApp.Api.runtimeconfig.json

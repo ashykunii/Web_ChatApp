@@ -22,15 +22,15 @@ body.dark-theme {
     --chat-bg: #0a0d13;
     --sidebar-bg: #111619;
     --sidebar-hover: rgba(255, 255, 255, 0.04);
-    --sidebar-active: #1e3326;
-    --msg-incoming: #1c3124;
+    --sidebar-active: #1e1e33;
+    --msg-incoming: #1c1d31;
     --msg-outgoing: #2a2f54;
     --text-main: #e8f5eb;
-    --text-sub: #7aaa86;
+    --text-sub: #7a7faa;
     --input-bg: rgba(0, 0, 0, 0.3);
-    --drawer-banner-bg: #121913;
-    --tg-blue: #103616;
-    --tg-blue-hover: #144523;
+    --drawer-banner-bg: #121319;
+    --tg-blue: #111036;
+    --tg-blue-hover: #1a1445;
     --border-color: rgba(255, 255, 255, 0.08);
     --bubble-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
     --chat-wallpaper-opacity: 0.07;
@@ -227,7 +227,7 @@ input:focus, select:focus, textarea:focus {
     flex-direction: column;
     border-right: 1px solid var(--border-color);
     position: relative;
-    min-height: 0;    /* allow sidebar to shrink so sidebar-list can scroll */
+    min-height: 0;   
     overflow: hidden;
     height: 100%;
 }
@@ -484,9 +484,9 @@ input:checked + .slider:before {
     display: flex;
     flex-direction: column;
     background-color: var(--chat-bg);
-    min-height: 0;       /* allow column to shrink below natural content height */
-    overflow: hidden;    /* clip children that overflow */
-    height: 100%;        /* fill the grid column */
+    min-height: 0;      
+    overflow: hidden;  
+    height: 100%;        
 }
 .chat-header {
     height: 56px;
@@ -561,10 +561,10 @@ input:checked + .slider:before {
     color: #ec5b5b;
 }
 
-/* Messages Area (Telegram bubbles) */
+/* Messages Area  */
 .messages {
     flex: 1;
-    min-height: 0;       /* KEY: without this, flex children ignore overflow-y */
+    min-height: 0;      
     overflow-y: auto;
     padding: 24px 32px;
     display: flex;
