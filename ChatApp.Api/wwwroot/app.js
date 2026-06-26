@@ -152,8 +152,7 @@ $('nightModeToggle').onchange = (e) => {
 // Drawer Menu Routing
 $('drawerMenuProfile').onclick = () => { closeDrawer(); showEditProfileModal(); };
 $('drawerMenuNewGroup').onclick = () => { closeDrawer(); openNewGroupModal(); };
-$('drawerMenuContacts').onclick = () => { closeDrawer(); selectTab('contacts'); };
-
+$('drawerMenuContacts').onclick = () => { closeDrawer(); selectTab('contacts'); }
 
 function selectTab(tab) {
     state.activeTab = tab;
@@ -769,7 +768,7 @@ function renderMessages(scrollToBottom = true) {
                 attachmentHtml = `
                     <div class="attachment-container">
                         <a href="${m.attachmentUrl}" class="file-attachment" download="${escapeHtml(m.attachmentFileName)}">
-                            <span class="file-icon">📄</span>
+                            <span class="file-icon"></span>
                             <div class="file-info">
                                 <div class="file-name">${escapeHtml(m.attachmentFileName)}</div>
                                 <div class="file-size">Download file</div>

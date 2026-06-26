@@ -72,7 +72,8 @@ builder.Services.AddCors(options =>
         policy.WithOrigins(
                 "http://localhost:5173",
                 "https://localhost:5173",
-                "http://127.0.0.1:5500",   // live server / VS Code
+                "http://127.0.0.1:5500",
+                "http://localhost:5163",
                 "null")                    // file:// during dev
               .AllowAnyHeader()
               .AllowAnyMethod()
