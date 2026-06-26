@@ -1807,11 +1807,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Python-Web\\Web_ChatApp\\ChatApp.Infrastructure\\ChatApp.Infrastructure.csproj",
+      "projectUniqueName": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Infrastructure\\ChatApp.Infrastructure.csproj",
       "projectName": "ChatApp.Infrastructure",
-      "projectPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Python-Web\\Web_ChatApp\\ChatApp.Infrastructure\\ChatApp.Infrastructure.csproj",
+      "projectPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Infrastructure\\ChatApp.Infrastructure.csproj",
       "packagesPath": "C:\\Users\\Sorya Sok\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Python-Web\\Web_ChatApp\\ChatApp.Infrastructure\\obj\\",
+      "outputPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"
@@ -1832,8 +1832,8 @@
         "net8.0": {
           "targetAlias": "net8.0",
           "projectReferences": {
-            "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Python-Web\\Web_ChatApp\\ChatApp.Application\\ChatApp.Application.csproj": {
-              "projectPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Python-Web\\Web_ChatApp\\ChatApp.Application\\ChatApp.Application.csproj"
+            "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Application\\ChatApp.Application.csproj": {
+              "projectPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Application\\ChatApp.Application.csproj"
             }
           }
         }

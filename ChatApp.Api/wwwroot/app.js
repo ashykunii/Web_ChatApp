@@ -153,7 +153,7 @@ $('nightModeToggle').onchange = (e) => {
 $('drawerMenuProfile').onclick = () => { closeDrawer(); showEditProfileModal(); };
 $('drawerMenuNewGroup').onclick = () => { closeDrawer(); openNewGroupModal(); };
 $('drawerMenuContacts').onclick = () => { closeDrawer(); selectTab('contacts'); };
-$('drawerMenuSettings').onclick = () => { closeDrawer(); showEditProfileModal(); };
+
 
 function selectTab(tab) {
     state.activeTab = tab;

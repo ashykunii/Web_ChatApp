@@ -1048,11 +1048,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Python-Web\\Web_ChatApp\\ChatApp.Domain\\ChatApp.Domain.csproj",
+      "projectUniqueName": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Domain\\ChatApp.Domain.csproj",
       "projectName": "ChatApp.Domain",
-      "projectPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Python-Web\\Web_ChatApp\\ChatApp.Domain\\ChatApp.Domain.csproj",
+      "projectPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Domain\\ChatApp.Domain.csproj",
       "packagesPath": "C:\\Users\\Sorya Sok\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Python-Web\\Web_ChatApp\\ChatApp.Domain\\obj\\",
+      "outputPath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Domain\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

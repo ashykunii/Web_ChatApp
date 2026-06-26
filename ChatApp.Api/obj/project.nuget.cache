@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "WaLb+dY/LcM=",
+  "dgSpecHash": "sCJbkKbRf7Y=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Python-Web\\Web_ChatApp\\ChatApp.Api\\ChatApp.Api.csproj",
+  "projectFilePath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Api\\ChatApp.Api.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Sorya Sok\\.nuget\\packages\\humanizer.core\\2.14.1\\humanizer.core.2.14.1.nupkg.sha512",
     "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.aspnetcore.authentication.jwtbearer\\8.0.8\\microsoft.aspnetcore.authentication.jwtbearer.8.0.8.nupkg.sha512",

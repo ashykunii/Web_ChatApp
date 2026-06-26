@@ -11,3 +11,16 @@ C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Python-Web\Web_ChatApp\
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Python-Web\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\refint\ChatApp.Domain.dll
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Python-Web\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ChatApp.Domain.pdb
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Python-Web\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ref\ChatApp.Domain.dll
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\bin\Debug\net8.0\ChatApp.Domain.deps.json
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\bin\Debug\net8.0\ChatApp.Domain.dll
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\bin\Debug\net8.0\ChatApp.Domain.pdb
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ChatApp.Domain.csproj.AssemblyReference.cache
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ChatApp.Domain.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ChatApp.Domain.AssemblyInfoInputs.cache
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ChatApp.Domain.AssemblyInfo.cs
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ChatApp.Domain.csproj.CoreCompileInputs.cache
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ChatApp.Domain.sourcelink.json
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ChatApp.Domain.dll
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\refint\ChatApp.Domain.dll
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ChatApp.Domain.pdb
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Domain\obj\Debug\net8.0\ref\ChatApp.Domain.dll
