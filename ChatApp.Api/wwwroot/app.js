@@ -1,4 +1,3 @@
-// ChatApp Frontend — Telegram Light/Dark Mode Hybrid
 const API_BASE = window.location.origin;
 const HUB_URL  = `${API_BASE}/hubs/chat`;
 
@@ -150,9 +149,11 @@ $('nightModeToggle').onchange = (e) => {
 })();
 
 // Drawer Menu Routing
+// for profile can be improved better by having the edit in seeting instead
 $('drawerMenuProfile').onclick = () => { closeDrawer(); showEditProfileModal(); };
 $('drawerMenuNewGroup').onclick = () => { closeDrawer(); openNewGroupModal(); };
 $('drawerMenuContacts').onclick = () => { closeDrawer(); selectTab('contacts'); };
+// addded functions for settings
 $('drawerMenuSettings').onclick = () => { closeDrawer(); showSettingsModal(); };
 $('menuLogout').onclick = () => { logout(); };
 
@@ -267,8 +268,12 @@ async function connectHub() {
         if (isCurrent) {
             const existingIndex = state.messages.findIndex(m => m.id === msg.id);
             if (existingIndex !== -1) {
+                // Remove everything once refreshed if the message is deleted
                 if (msg.isDeleted) {
                     state.messages[existingIndex].content = '[deleted]';
+                    state.messages[existingIndex].attachmentType = '';
+                    state.messages[existingIndex].attachmentUrl = '';
+                    state.messages[existingIndex].attachmentFileName = '';
                     state.messages[existingIndex].isDeleted = true;
                 } else {
                     state.messages[existingIndex].content = msg.content;
@@ -457,7 +462,7 @@ function renderSearchResults(results) {
     });
 }
 
-// Group Details Info Modal
+// Group Details Info Modal for
 async function showGroupInfoModal(groupId) {
     try {
         const g = await api(`/api/groups/${groupId}`);
@@ -551,8 +556,8 @@ async function openChat(target) {
                     ` : `
                         <a id="menuGroupInfo">Group Details</a>
                     `}
-                    <a id="menuSettings">My settings</a>
-                    <a id="menuLogout" class="danger">Logout</a>
+                    // chat setting instead of profile
+                    <a id="menuSettings">Chat setting</a>
                 </div>
             </div>
         </div>
@@ -582,7 +587,7 @@ async function openChat(target) {
 
                 <!-- Attachment preview bar -->
                 <div class="attachment-preview-bar" id="attachmentPreviewBar">
-                    <span class="attachment-preview-icon">📎</span>
+                    <span class="attachment-preview-icon"></span>
                     <span class="attachment-preview-name" id="attachmentPreviewName"></span>
                     <button class="attachment-preview-remove" id="btnRemoveAttachment">Remove</button>
                 </div>
@@ -635,7 +640,7 @@ async function openChat(target) {
             showGroupInfoModal(target.id);
         };
     }
-
+// chat setting instead of profile
     $('menuSettings').onclick = (e) => {
         e.stopPropagation();
         $('headerMenuDropdown').classList.remove('active');
@@ -1127,6 +1132,24 @@ function showEditProfileModal() {
         }
     };
 
+    $('modalBackdrop').classList.add('active');
+}
+
+
+// Setting Modals
+function showSettingsModal() {
+    const content = $('modalContent');
+    content.innerHTML = `
+        <h2>Settings</h2>
+        <div class="form-group">
+            <label>Theme</label>
+            <select id="settingsTheme">
+                <option value="light">Light</option>
+                <option value="dark">Dark</option>
+            </select>
+        </div>
+        <button id="btnSaveSettings" class="btn btn-primary">Save</button>
+    `;
     $('modalBackdrop').classList.add('active');
 }
 

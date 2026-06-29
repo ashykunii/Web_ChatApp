@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ChatApp.Domain")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e1fd791b9f0594e6aedea826bea9d4a443f21ef7")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+2b2ce93bc2ec8cec61265df6129b410bc1220e52")]
 [assembly: System.Reflection.AssemblyProductAttribute("ChatApp.Domain")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ChatApp.Domain")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
