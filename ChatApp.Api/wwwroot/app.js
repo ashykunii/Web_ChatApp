@@ -134,7 +134,7 @@ $('nightModeToggle').onchange = (e) => {
     }
 };
 
-// Initialize Theme
+// Initialize Theme & Preferences
 (function initTheme() {
     const nightMode = localStorage.getItem('night_mode');
     if (nightMode === 'true') {
@@ -146,11 +146,15 @@ $('nightModeToggle').onchange = (e) => {
         document.body.classList.add('light-theme');
         $('nightModeToggle').checked = false;
     }
+    const savedSize = localStorage.getItem('msg_font_size');
+    if (savedSize) {
+        document.documentElement.style.setProperty('--msg-font-size', savedSize);
+    }
 })();
 
 // Drawer Menu Routing
 // for profile can be improved better by having the edit in seeting instead
-$('drawerMenuProfile').onclick = () => { closeDrawer(); showEditProfileModal(); };
+$('drawerMenuProfile').onclick = () => { closeDrawer(); showProfilePanel(); };
 $('drawerMenuNewGroup').onclick = () => { closeDrawer(); openNewGroupModal(); };
 $('drawerMenuContacts').onclick = () => { closeDrawer(); selectTab('contacts'); };
 // addded functions for settings
@@ -306,6 +310,15 @@ async function connectHub() {
         const idx = state.messages.findIndex(m => m.id === messageId);
         if (idx !== -1) {
             state.messages[idx].content = newContent;
+            state.messages[idx].isEdited = true;
+            renderMessages();
+        }
+    });
+
+    state.connection.on('MessageSeen', (messageId) => {
+        const idx = state.messages.findIndex(m => m.id === messageId);
+        if (idx !== -1) {
+            state.messages[idx].isSeen = true;
             renderMessages();
         }
     });
@@ -556,7 +569,6 @@ async function openChat(target) {
                     ` : `
                         <a id="menuGroupInfo">Group Details</a>
                     `}
-                    // chat setting instead of profile
                     <a id="menuSettings">Chat setting</a>
                 </div>
             </div>
@@ -640,11 +652,10 @@ async function openChat(target) {
             showGroupInfoModal(target.id);
         };
     }
-// chat setting instead of profile
     $('menuSettings').onclick = (e) => {
         e.stopPropagation();
         $('headerMenuDropdown').classList.remove('active');
-        showEditProfileModal();
+        showChatSettingsPanel(target);
     };
 
     $('menuLogout').onclick = (e) => {
@@ -828,6 +839,12 @@ function renderMessages(scrollToBottom = true) {
             `;
         }
 
+        const editedBadge = m.isEdited ? `<span class="edited-badge">edited</span>` : '';
+        const seenMark = isMine
+            ? `<span class="seen-check ${m.isSeen ? 'seen' : ''}" title="${m.isSeen ? 'Seen' : 'Sent'}">
+                <svg viewBox="0 0 18 18" width="14" height="14"><path fill="currentColor" d="M17.394 5.035l-.57-.444a.434.434 0 00-.609.076L8.97 15.239l-3.838-4.84a.434.434 0 00-.609-.076l-.57.444a.434.434 0 00-.076.609l4.53 5.713a.435.435 0 00.683 0L17.47 5.644a.434.434 0 00-.076-.609z"/></svg>
+              </span>`
+            : '';
         bubble.innerHTML = `
             ${!isMine && state.activeChat?.type === 'group' ? `<div class="bubble-sender">${escapeHtml(m.senderDisplayName)}</div>` : ''}
             ${replyRefHtml}
@@ -835,7 +852,7 @@ function renderMessages(scrollToBottom = true) {
                 ${textContent ? `<div>${escapeHtml(textContent)}</div>` : ''}
                 ${attachmentHtml}
             </div>
-            <div class="bubble-meta">${formatTime(m.sentAtUtc)}</div>
+            <div class="bubble-meta">${editedBadge}${formatTime(m.sentAtUtc)}${seenMark}</div>
         `;
         wrapper.appendChild(bubble);
 
@@ -1136,20 +1153,191 @@ function showEditProfileModal() {
 }
 
 
-// Setting Modals
+// Read-only profile panel (drawer > My Profile)
+function showProfilePanel() {
+    const m = state.me;
+    if (!m) return;
+    const content = $('modalContent');
+    const avatarHtml = m.avatarUrl
+        ? `background-image:url(${m.avatarUrl});background-size:cover;background-position:center;`
+        : '';
+    const initLetter = initials(m.displayName);
+    const status = state.presenceMap[m.userId] || 'Online';
+    content.innerHTML = `
+        <div class="profile-panel">
+            <div class="profile-panel-cover"></div>
+            <div class="profile-panel-avatar" style="${avatarHtml}">${m.avatarUrl ? '' : initLetter}</div>
+            <div class="profile-panel-name">${escapeHtml(m.displayName)}</div>
+            <div class="profile-panel-username">@${escapeHtml(m.userName)}</div>
+            <div class="profile-panel-status">
+                <span class="presence-dot presence-${status}"></span> ${status}
+            </div>
+            <div class="profile-panel-info">
+                <div class="profile-info-row">
+                    <span class="profile-info-label">Email</span>
+                    <span class="profile-info-value">${escapeHtml(m.email || '—')}</span>
+                </div>
+                <div class="profile-info-row">
+                    <span class="profile-info-label">Username</span>
+                    <span class="profile-info-value">@${escapeHtml(m.userName)}</span>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn" onclick="closeModal(); showEditProfileModal();">Edit Profile</button>
+            </div>
+        </div>
+    `;
+    if (!m.email) {
+        api('/api/auth/me').then(me => {
+            state.me.email = me.email;
+            const v = content.querySelector('.profile-info-value');
+            if (v) v.textContent = me.email || '—';
+        }).catch(() => {});
+    }
+    $('modalBackdrop').classList.add('active');
+}
+
+// Chat Info / Settings side panel
+function showChatSettingsPanel(target) {
+    const content = $('modalContent');
+    if (target.type === 'private') {
+        const contact = state.contacts.find(c => c.userId === target.id) || {};
+        const status = state.presenceMap[target.id] || 'Offline';
+        const avatarHtml = contact.avatarUrl
+            ? `background-image:url(${contact.avatarUrl});background-size:cover;background-position:center;`
+            : '';
+        content.innerHTML = `
+            <div class="profile-panel">
+                <div class="profile-panel-cover"></div>
+                <div class="profile-panel-avatar" style="${avatarHtml}">${contact.avatarUrl ? '' : initials(target.name)}</div>
+                <div class="profile-panel-name">${escapeHtml(target.name)}</div>
+                <div class="profile-panel-status">
+                    <span class="presence-dot presence-${status}"></span> ${status}
+                </div>
+                <div class="profile-panel-info">
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Username</span>
+                        <span class="profile-info-value">@${escapeHtml(contact.userName || '—')}</span>
+                    </div>
+                    <div class="profile-info-row">
+                        <span class="profile-info-label">Contact since</span>
+                        <span class="profile-info-value">${contact.addedAtUtc ? new Date(contact.addedAtUtc+'Z').toLocaleDateString() : '—'}</span>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                </div>
+            </div>
+        `;
+    } else {
+        api(`/api/groups/${target.id}`).then(g => {
+            content.innerHTML = `
+                <div class="profile-panel">
+                    <div class="profile-panel-cover" style="background:linear-gradient(135deg,#3a8c55,#2f7244);"></div>
+                    <div class="profile-panel-avatar" style="font-size:28px;">#</div>
+                    <div class="profile-panel-name">${escapeHtml(g.name)}</div>
+                    <div class="profile-panel-username">${g.memberCount} members</div>
+                    <div class="profile-panel-info">
+                        ${g.members.slice(0,5).map(m => `
+                            <div class="profile-info-row">
+                                <span class="presence-dot presence-${m.presenceStatus || 'Offline'}"></span>
+                                <span class="profile-info-value">${escapeHtml(m.displayName)}${m.isAdmin ? ' <span class="badge badge-admin">Admin</span>' : ''}</span>
+                            </div>
+                        `).join('')}
+                        ${g.memberCount > 5 ? `<div style="font-size:12px;color:var(--text-sub);padding:4px 0;">+${g.memberCount-5} more</div>` : ''}
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                        <button class="btn btn-danger" id="btnLeaveGroupPanel">Leave Group</button>
+                    </div>
+                </div>
+            `;
+            $('btnLeaveGroupPanel').onclick = async () => {
+                try {
+                    await api(`/api/groups/${target.id}/members/${state.me.userId}`, { method: 'DELETE' });
+                    toast('Left group.', 'success');
+                    closeModal();
+                    await loadGroups();
+                    state.activeChat = null;
+                    $('chatPane').innerHTML = '<div class="empty-state">Select a contact or group to start chatting.</div>';
+                    renderSidebar();
+                } catch (e) { toast(e.message, 'error'); }
+            };
+        }).catch(e => toast(e.message, 'error'));
+        content.innerHTML = `<div class="profile-panel"><div style="padding:40px;text-align:center;color:var(--text-sub);">Loading...</div></div>`;
+    }
+    $('modalBackdrop').classList.add('active');
+}
+
+// Settings Modal (app-wide settings)
 function showSettingsModal() {
     const content = $('modalContent');
+    const isDark = document.body.classList.contains('dark-theme');
     content.innerHTML = `
         <h2>Settings</h2>
-        <div class="form-group">
-            <label>Theme</label>
-            <select id="settingsTheme">
-                <option value="light">Light</option>
-                <option value="dark">Dark</option>
-            </select>
+        <div class="settings-section">
+            <div class="settings-section-title">Appearance</div>
+            <div class="form-group">
+                <label>Theme</label>
+                <select id="settingsTheme">
+                    <option value="light" ${!isDark ? 'selected' : ''}>Light</option>
+                    <option value="dark" ${isDark ? 'selected' : ''}>Dark</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Message Font Size</label>
+                <select id="settingsFontSize">
+                    <option value="13px">Small</option>
+                    <option value="14px" selected>Medium</option>
+                    <option value="16px">Large</option>
+                </select>
+            </div>
         </div>
-        <button id="btnSaveSettings" class="btn btn-primary">Save</button>
+        <div class="settings-section">
+            <div class="settings-section-title">Account</div>
+            <div class="form-group">
+                <label>Presence Status</label>
+                <select id="settingsPresence">
+                    <option value="Online">Online</option>
+                    <option value="Away">Away</option>
+                    <option value="DoNotDisturb">Do Not Disturb</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="btn" id="btnSaveSettings">Save Settings</button>
+        </div>
     `;
+    const activeStatus = state.presenceMap[state.me?.userId] || 'Online';
+    $('settingsPresence').value = activeStatus;
+    const savedSize = localStorage.getItem('msg_font_size') || '14px';
+    $('settingsFontSize').value = savedSize;
+    $('btnSaveSettings').onclick = async () => {
+        const theme = $('settingsTheme').value;
+        const fontSize = $('settingsFontSize').value;
+        const presence = $('settingsPresence').value;
+        if (theme === 'dark') {
+            document.body.classList.remove('light-theme');
+            document.body.classList.add('dark-theme');
+            $('nightModeToggle').checked = true;
+            localStorage.setItem('night_mode', 'true');
+        } else {
+            document.body.classList.remove('dark-theme');
+            document.body.classList.add('light-theme');
+            $('nightModeToggle').checked = false;
+            localStorage.setItem('night_mode', 'false');
+        }
+        document.documentElement.style.setProperty('--msg-font-size', fontSize);
+        localStorage.setItem('msg_font_size', fontSize);
+        if (state.connection && state.me) {
+            const valMap = { 'Offline': 0, 'Online': 1, 'Away': 2, 'DoNotDisturb': 3 };
+            try { await state.connection.invoke('SetPresence', valMap[presence]); } catch {}
+        }
+        toast('Settings saved.', 'success');
+        closeModal();
+    };
     $('modalBackdrop').classList.add('active');
 }
 
