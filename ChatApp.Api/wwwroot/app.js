@@ -1,7 +1,11 @@
+/* ==========================================================================
+   1. GLOBAL CONSTANTS & APP STATE
+   ========================================================================== */
+
 const API_BASE = window.location.origin;
 const HUB_URL  = `${API_BASE}/hubs/chat`;
 
-// Global Application State
+// Global Application State Caching
 const state = {
     token: null,             // JWT Auth Token
     me: null,                // Logged-in User Info: { userId, userName, displayName, role, avatarUrl }
@@ -21,9 +25,14 @@ const state = {
     pinnedMessages: JSON.parse(localStorage.getItem('chatapp_pinned') || '{}') // Pinned messages cache
 };
 
-// Helpers
+/* ==========================================================================
+   2. COMMON UTILITY & FORMATTING FUNCTIONS
+   ========================================================================== */
+
+// DOM Selector Helper
 const $ = id => document.getElementById(id);
 
+// Toast Notification Engine
 function toast(msg, type = 'info') {
     const el = document.createElement('div');
     el.className = `toast ${type}`;
@@ -32,6 +41,7 @@ function toast(msg, type = 'info') {
     setTimeout(() => el.remove(), 3500);
 }
 
+// Wrapper for API HTTP Requests
 async function api(path, opts = {}) {
     const headers = { 'Content-Type': 'application/json', ...opts.headers };
     if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
@@ -44,11 +54,13 @@ async function api(path, opts = {}) {
     return res.status === 204 ? null : res.json();
 }
 
+// HTML Special Character Escaping
 function escapeHtml(s) {
     if (!s) return '';
     return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 }
 
+// Time Formatter for ISO string to Local Time (HH:MM)
 function formatTime(iso) {
     if (!iso) return '';
     // Ensure the string is treated as UTC (ASP.NET returns datetimes without 'Z')
@@ -57,20 +69,20 @@ function formatTime(iso) {
     return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 }
 
-// Returns a YYYY-MM-DD string in LOCAL time for day-grouping
+// Date Grouping Helper (returns YYYY-MM-DD in local time)
 function toLocalDateKey(iso) {
     if (!iso) return '';
     const utcStr = iso.endsWith('Z') || iso.includes('+') ? iso : iso + 'Z';
     const d = new Date(utcStr);
-    return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 }
 
-// Returns a human-readable label: "Today", "Yesterday", or "Monday, June 23, 2026"
+// Day separation label formatter
 function formatDateLabel(dateKey) {
     const [y, mo, dy] = dateKey.split('-').map(Number);
-    const msgDate  = new Date(y, mo - 1, dy);
-    const now      = new Date();
-    const today    = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const msgDate   = new Date(y, mo - 1, dy);
+    const now       = new Date();
+    const today     = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const yesterday = new Date(today); yesterday.setDate(today.getDate() - 1);
 
     if (msgDate.getTime() === today.getTime())     return 'Today';
@@ -79,10 +91,12 @@ function formatDateLabel(dateKey) {
     return msgDate.toLocaleDateString([], { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
 }
 
+// Generates avatar initials for text-based avatars
 function initials(name) {
     return (name || '?').split(' ').map(p => p[0]).slice(0, 2).join('').toUpperCase();
 }
 
+// Renders User Avatars or falls back to initials
 function renderAvatarEl(el, displayName, avatarUrl) {
     if (!el) return;
     if (avatarUrl) {
@@ -96,7 +110,11 @@ function renderAvatarEl(el, displayName, avatarUrl) {
     }
 }
 
-// Drawer Toggles
+/* ==========================================================================
+   3. DRAWER & SIDEBAR EVENT LISTENERS
+   ========================================================================== */
+
+// Drawer Control Operations
 $('btnHamburger').onclick = (e) => {
     e.stopPropagation();
     $('drawer').classList.add('active');
@@ -121,31 +139,16 @@ function updateDrawerProfile() {
     renderAvatarEl($('drawerAvatar'), state.me.displayName, state.me.avatarUrl);
 }
 
-// Night Mode Toggle Switch
-$('nightModeToggle').onchange = (e) => {
-    const isDark = e.target.checked;
-    if (isDark) {
-        document.body.classList.remove('light-theme');
-        document.body.classList.add('dark-theme');
-        localStorage.setItem('night_mode', 'true');
-    } else {
-        document.body.classList.remove('dark-theme');
-        document.body.classList.add('light-theme');
-        localStorage.setItem('night_mode', 'false');
-    }
-};
 
-// Initialize Theme & Preferences
+// Initial Theme & Configuration Sync
 (function initTheme() {
     const nightMode = localStorage.getItem('night_mode');
     if (nightMode === 'true') {
         document.body.classList.remove('light-theme');
         document.body.classList.add('dark-theme');
-        $('nightModeToggle').checked = true;
     } else {
         document.body.classList.remove('dark-theme');
         document.body.classList.add('light-theme');
-        $('nightModeToggle').checked = false;
     }
     const savedSize = localStorage.getItem('msg_font_size');
     if (savedSize) {
@@ -153,35 +156,37 @@ $('nightModeToggle').onchange = (e) => {
     }
 })();
 
-// Drawer Menu Routing
-// for profile can be improved better by having the edit in seeting instead
-$('drawerMenuProfile').onclick = () => { closeDrawer(); showProfilePanel(); };
+// Drawer Action Triggers
+$('drawerMenuProfile').onclick  = () => { closeDrawer(); showProfilePanel(); };
 $('drawerMenuNewGroup').onclick = () => { closeDrawer(); openNewGroupModal(); };
 $('drawerMenuContacts').onclick = () => { closeDrawer(); selectTab('contacts'); };
-// addded functions for settings
 $('drawerMenuSettings').onclick = () => { closeDrawer(); showSettingsModal(); };
-$('menuLogout').onclick = () => { logout(); };
-
+$('menuLogout').onclick          = () => { logout(); };
 
 function selectTab(tab) {
     state.activeTab = tab;
     renderSidebar();
 }
 
-// Close Context menus & dropdowns
+// Close Dropdowns on Click Outside
 document.addEventListener('click', () => {
     const drop = $('headerMenuDropdown');
     if (drop) drop.classList.remove('active');
     $('msgContextMenu').classList.remove('active');
 });
 
-// Auth Panels switching
+/* ==========================================================================
+   4. USER AUTHENTICATION & LOGIN FLOW
+   ========================================================================== */
+
+// Auth Screen Toggle Tabs
 $('tabLogin').onclick = () => {
     $('tabLogin').classList.add('active');
     $('tabRegister').classList.remove('active');
     $('loginForm').style.display = '';
     $('registerForm').style.display = 'none';
 };
+
 $('tabRegister').onclick = () => {
     $('tabRegister').classList.add('active');
     $('tabLogin').classList.remove('active');
@@ -189,6 +194,7 @@ $('tabRegister').onclick = () => {
     $('loginForm').style.display = 'none';
 };
 
+// Login Form Submit Event
 $('loginForm').onsubmit = async (e) => {
     e.preventDefault();
     $('loginError').textContent = '';
@@ -209,6 +215,7 @@ $('loginForm').onsubmit = async (e) => {
     }
 };
 
+// Register Form Submit Event
 $('registerForm').onsubmit = async (e) => {
     e.preventDefault();
     $('regError').textContent = '';
@@ -229,32 +236,32 @@ $('registerForm').onsubmit = async (e) => {
     }
 };
 
+// Logout Functionality
 function logout() {
     if (state.connection) {
         state.connection.stop().catch(err => console.error(err));
     }
-    
     localStorage.removeItem('chatapp_token');
     state.token = null;
     state.me = null;
-    
     window.location.reload();
 }
 
-// Enter App
+// Application Landing Entry Setup
 async function enterApp() {
     $('authScreen').style.display = 'none';
     $('app').classList.add('active');
-
     updateDrawerProfile();
-
     await connectHub();
     await loadContacts();
     await loadGroups();
     renderSidebar();
 }
 
-// SignalR Connection
+/* ==========================================================================
+   5. SIGNALR HUB CLIENT CONNECTION & EVENT BINDINGS
+   ========================================================================== */
+
 async function connectHub() {
     state.connection = new signalR.HubConnectionBuilder()
         .withUrl(HUB_URL, { accessTokenFactory: () => state.token })
@@ -262,6 +269,7 @@ async function connectHub() {
         .configureLogging(signalR.LogLevel.Warning)
         .build();
 
+    // Message Received Handling
     state.connection.on('ReceiveMessage', (msg) => {
         const chat = state.activeChat;
         const isCurrent =
@@ -273,7 +281,6 @@ async function connectHub() {
         if (isCurrent) {
             const existingIndex = state.messages.findIndex(m => m.id === msg.id);
             if (existingIndex !== -1) {
-                // Remove everything once refreshed if the message is deleted
                 if (msg.isDeleted) {
                     state.messages[existingIndex].content = '[deleted]';
                     state.messages[existingIndex].attachmentType = '';
@@ -298,6 +305,7 @@ async function connectHub() {
         }
     });
 
+    // Message Deleted Notification
     state.connection.on('MessageDeleted', (messageId) => {
         const idx = state.messages.findIndex(m => m.id === messageId);
         if (idx !== -1) {
@@ -307,6 +315,7 @@ async function connectHub() {
         }
     });
 
+    // Message Edited Notification
     state.connection.on('MessageEdited', (messageId, newContent) => {
         const idx = state.messages.findIndex(m => m.id === messageId);
         if (idx !== -1) {
@@ -316,6 +325,7 @@ async function connectHub() {
         }
     });
 
+    // Message Read Confirmation Receipt
     state.connection.on('MessageSeen', (messageId) => {
         const idx = state.messages.findIndex(m => m.id === messageId);
         if (idx !== -1) {
@@ -324,6 +334,7 @@ async function connectHub() {
         }
     });
 
+    // User Status Presence Changes
     state.connection.on('PresenceChanged', (userId, status) => {
         state.presenceMap[userId] = status;
         if (state.me && userId === state.me.userId) {
@@ -335,10 +346,12 @@ async function connectHub() {
         }
     });
 
+    // Bulk Message Sent Complete Notification
     state.connection.on('BulkMessageSent', (dtos) => {
         toast(`Bulk message sent to ${dtos.length} recipients.`, 'success');
     });
 
+    // Banned Disconnection Handling
     state.connection.on('ForceDisconnect', (reason) => {
         toast(`Account banned: ${reason}`, 'error');
         setTimeout(() => logout(), 2000);
@@ -352,7 +365,11 @@ async function connectHub() {
     }
 }
 
-// User Search logic
+/* ==========================================================================
+   6. CONTACT SEARCH & SIDEBAR LIST RENDERING
+   ========================================================================== */
+
+// Debounced Contact Search logic
 let searchTimer;
 $('userSearch').oninput = () => {
     clearTimeout(searchTimer);
@@ -366,7 +383,7 @@ $('userSearch').oninput = () => {
     }, 250);
 };
 
-// Data Loading
+// Initial Data Pulling
 async function loadContacts() {
     try {
         state.contacts = await api('/api/contacts');
@@ -380,18 +397,16 @@ async function loadGroups() {
     } catch (e) { toast(e.message, 'error'); }
 }
 
+// Sidepane Navigation Lists Renderer
 function renderSidebar() {
     const list = $('sidebarList');
     list.innerHTML = '';
 
-    // Renders the sidebar based on active navigation tab
     if (state.activeTab === 'chats') {
-        // Combined Tab: Merge groups and contacts/chats together on the side
         const combined = [];
         state.contacts.forEach(c => combined.push({ type: 'private', data: c, name: c.displayName }));
         state.groups.forEach(g => combined.push({ type: 'group', data: g, name: g.name }));
         
-        // Sort merged items alphabetically by name/title
         combined.sort((a, b) => a.name.localeCompare(b.name));
         
         combined.forEach(item => {
@@ -440,7 +455,6 @@ function renderSidebar() {
             const avatarDiv = document.createElement('div');
             avatarDiv.className = 'avatar';
             renderAvatarEl(avatarDiv, c.displayName, c.avatarUrl);
-
             div.appendChild(avatarDiv);
 
             const infoDiv = document.createElement('div');
@@ -479,6 +493,7 @@ function renderSidebar() {
     }
 }
 
+// Search Results Rendering
 function renderSearchResults(results) {
     const list = $('sidebarList');
     list.innerHTML = '';
@@ -522,74 +537,11 @@ function renderSearchResults(results) {
     });
 }
 
-// Group Details Info Modal for
-async function showGroupInfoModal(groupId) {
-    try {
-        const g = await api(`/api/groups/${groupId}`);
-        const content = $('modalContent');
-        content.innerHTML = `
-            <h2>${escapeHtml(g.name)}</h2>
-            <div style="margin-bottom:20px; max-height: 250px; overflow-y: auto;">
-                ${g.members.map(m => `
-                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-color);">
-                        <div class="avatar" id="membAvatar-${m.userId}" style="width:30px;height:30px;font-size:11px;"></div>
-                        <div style="flex:1;">
-                            ${escapeHtml(m.displayName)} 
-                            ${m.isAdmin ? '<span class="badge badge-admin">Admin</span>' : ''}
-                        </div>
-                    </div>
-                `).join('')}
-            </div>
-            <div class="form-group">
-                <label>Add Member</label>
-                <select id="addMemberSelect">
-                    <option value="">-- select contact --</option>
-                    ${state.contacts.filter(c => !g.members.some(m => m.userId === c.userId)).map(c => `
-                        <option value="${c.userId}">${escapeHtml(c.displayName)}</option>
-                    `).join('')}
-                </select>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-danger" id="btnLeaveGroup">Leave Group</button>
-                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
-                <button class="btn" id="btnAddMember">Add</button>
-            </div>
-        `;
+/* ==========================================================================
+   7. CHAT FLOW & CONVERSATION ROOM MANAGEMENT
+   ========================================================================== */
 
-        g.members.forEach(m => {
-            renderAvatarEl($(`membAvatar-${m.userId}`), m.displayName, m.avatarUrl);
-        });
-
-        $('modalBackdrop').classList.add('active');
-
-        $('btnAddMember').onclick = async () => {
-            const userId = $('addMemberSelect').value;
-            if (!userId) return;
-            try {
-                await api(`/api/groups/${groupId}/members`, {
-                    method: 'POST',
-                    body: JSON.stringify({ userId })
-                });
-                toast('Member added.', 'success');
-                closeModal();
-            } catch (e) { toast(e.message, 'error'); }
-        };
-
-        $('btnLeaveGroup').onclick = async () => {
-            try {
-                await api(`/api/groups/${groupId}/members/${state.me.userId}`, { method: 'DELETE' });
-                toast('Left group.', 'success');
-                closeModal();
-                await loadGroups();
-                state.activeChat = null;
-                $('chatPane').innerHTML = '<div class="empty-state">Select a contact or group to start chatting.</div>';
-                renderSidebar();
-            } catch (e) { toast(e.message, 'error'); }
-        };
-    } catch (e) { toast(e.message, 'error'); }
-}
-
-// Chat Actions
+// Open Chat conversation window
 async function openChat(target) {
     state.activeChat = target;
     state.messages = [];
@@ -676,7 +628,7 @@ async function openChat(target) {
         </div>
     `;
 
-    // Dynamic presence/member count status inside chat header
+    // Setup Header Action Dropdowns
     if (target.type === 'private') {
         const presence = state.presenceMap[target.id] || 'Offline';
         $('chatHeaderStatus').textContent = presence;
@@ -710,6 +662,7 @@ async function openChat(target) {
             showGroupInfoModal(target.id);
         };
     }
+    
     $('menuSettings').onclick = (e) => {
         e.stopPropagation();
         $('headerMenuDropdown').classList.remove('active');
@@ -757,47 +710,14 @@ async function openChat(target) {
     renderSidebar();
 }
 
-async function uploadAttachment(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const formData = new FormData();
-    formData.append('file', file);
-
-    try {
-        toast('Uploading file...', 'info');
-        const headers = {};
-        if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
-        
-        const res = await fetch(`${API_BASE}/api/messages/upload`, {
-            method: 'POST',
-            headers,
-            body: formData
-        });
-
-        if (!res.ok) {
-            const err = await res.json();
-            throw new Error(err.error || 'Upload failed');
-        }
-
-        const data = await res.json();
-        state.pendingAttachment = data; // { url, fileName, attachmentType }
-        
-        $('attachmentPreviewName').textContent = file.name;
-        $('attachmentPreviewBar').classList.add('active');
-        toast('File uploaded.', 'success');
-    } catch (err) {
-        toast(err.message, 'error');
-        $('fileAttachmentInput').value = '';
-    }
-}
-
+// Fetch historical messages from backend paginated cursors
 async function loadMessageHistory() {
     const t = state.activeChat;
     if (!t) return;
     const path = t.type === 'private'
         ? `/api/messages/private/${t.id}${state.oldestCursor ? `?cursor=${state.oldestCursor}` : ''}`
         : `/api/messages/group/${t.id}${state.oldestCursor ? `?cursor=${state.oldestCursor}` : ''}`;
+
     try {
         const page = await api(path);
         state.hasMore = page.nextCursor !== null;
@@ -807,11 +727,15 @@ async function loadMessageHistory() {
     } catch (e) { toast(e.message, 'error'); }
 }
 
+/* ==========================================================================
+   8. CHAT MESSAGE RENDERING & MESSAGE ACTIONS
+   ========================================================================== */
+
+// Renders the messages in the main messages window pane
 function renderMessages(scrollToBottom = true) {
     const area = $('messagesArea');
     if (!area) return;
     const prevScrollHeight = area.scrollHeight;
-
     area.innerHTML = '';
 
     if (state.hasMore) {
@@ -825,7 +749,7 @@ function renderMessages(scrollToBottom = true) {
     let lastDateKey = null;
 
     state.messages.forEach(m => {
-        // ── Date separator ────────────────────────────────────────────────
+        // Date separations
         const dateKey = toLocalDateKey(m.sentAtUtc);
         if (dateKey && dateKey !== lastDateKey) {
             lastDateKey = dateKey;
@@ -834,12 +758,14 @@ function renderMessages(scrollToBottom = true) {
             sep.innerHTML = `<span>${formatDateLabel(dateKey)}</span>`;
             area.appendChild(sep);
         }
-        // ── Message row ───────────────────────────────────────────────────
+        
+        // Message line row wrapper
         const row = document.createElement('div');
         const isMine = m.senderId === state.me.userId;
         row.className = 'message-row ' + (isMine ? 'outgoing' : 'incoming');
         row.id = `msgrow-${m.id}`;
 
+        // File attachments layout
         let attachmentHtml = '';
         if (m.attachmentUrl) {
             if (m.attachmentType === 'image') {
@@ -863,7 +789,7 @@ function renderMessages(scrollToBottom = true) {
             }
         }
 
-        // Avatar column
+        // Display sender profile photo for group incoming rows
         if (!isMine && state.activeChat?.type === 'group') {
             const avatarDiv = document.createElement('div');
             avatarDiv.className = 'message-avatar';
@@ -871,15 +797,14 @@ function renderMessages(scrollToBottom = true) {
             row.appendChild(avatarDiv);
         }
 
-        // Bubble wrapper
+        // Bubble structure wrapper
         const wrapper = document.createElement('div');
         wrapper.className = 'message-bubble-wrapper';
 
-        // msgchat Bubble
         const bubble = document.createElement('div');
         bubble.className = 'msgchat-bubble';
 
-        // Parse reply prefix format: >>reply:id:sender:snippet<<ActualText
+        // Parse reply notation prefix >>reply:id:sender:snippet<<ActualText
         let textContent = m.content;
         let replyRefHtml = '';
         const replyRegex = /^>>reply:(\d+):([^:]+):([^<]*)<<([\s\S]*)$/;
@@ -904,6 +829,7 @@ function renderMessages(scrollToBottom = true) {
                 <svg viewBox="0 0 18 18" width="14" height="14"><path fill="currentColor" d="M17.394 5.035l-.57-.444a.434.434 0 00-.609.076L8.97 15.239l-3.838-4.84a.434.434 0 00-.609-.076l-.57.444a.434.434 0 00-.076.609l4.53 5.713a.435.435 0 00.683 0L17.47 5.644a.434.434 0 00-.076-.609z"/></svg>
               </span>`
             : '';
+            
         bubble.innerHTML = `
             ${!isMine && state.activeChat?.type === 'group' ? `<div class="bubble-sender">${escapeHtml(m.senderDisplayName)}</div>` : ''}
             ${replyRefHtml}
@@ -915,7 +841,7 @@ function renderMessages(scrollToBottom = true) {
         `;
         wrapper.appendChild(bubble);
 
-        // Three-dot Action Trigger Button (on the right of message bubble)
+        // Right-Click Context Menu Button
         const menuBtn = document.createElement('button');
         menuBtn.className = 'msg-menu-btn';
         menuBtn.title = 'Message Actions';
@@ -939,14 +865,14 @@ function renderMessages(scrollToBottom = true) {
     }
 }
 
+// Right-click menu position clamp calculations
 function showContextMenu(e, m) {
     const menu = $('msgContextMenu');
     menu.classList.add('active');
 
-    // Bind action callbacks first (menu sizing depends on which rows are visible)
+    // Bind action events
     $('msgCtxReply').onclick = () => { initiateReply(m); menu.classList.remove('active'); };
 
-    // Copy Text Option
     $('msgCtxCopy').onclick = () => {
         let textToCopy = m.content;
         if (textToCopy.startsWith('>>reply:')) {
@@ -957,13 +883,11 @@ function showContextMenu(e, m) {
         menu.classList.remove('active');
     };
 
-    // Pin Message Option
     $('msgCtxPin').onclick = () => {
         pinMessage(m);
         menu.classList.remove('active');
     };
 
-    // Edit message Option (only if ours and not deleted)
     const isMine = m.senderId === state.me.userId;
     if (isMine && !m.isDeleted) {
         $('msgCtxEdit').style.display = 'flex';
@@ -972,7 +896,6 @@ function showContextMenu(e, m) {
         $('msgCtxEdit').style.display = 'none';
     }
 
-    // Delete message Option (only if ours)
     if (isMine && !m.isDeleted) {
         $('msgCtxDelete').style.display = 'flex';
         $('msgCtxDelete').onclick = () => { deleteMessage(m.id); menu.classList.remove('active'); };
@@ -980,7 +903,7 @@ function showContextMenu(e, m) {
         $('msgCtxDelete').style.display = 'none';
     }
 
-    // Position menu near the cursor, clamped so it stays fully on-screen
+    // Positions contextual container safely inside window client frames
     const menuRect = menu.getBoundingClientRect();
     const margin = 8;
     let top = e.clientY;
@@ -999,6 +922,7 @@ function showContextMenu(e, m) {
     menu.style.left = `${left}px`;
 }
 
+// Smooth scroll search highlighting animation
 function scrollToMessage(id) {
     const el = $(`msgrow-${id}`);
     if (el) {
@@ -1013,6 +937,7 @@ function scrollToMessage(id) {
     }
 }
 
+// Local storage pinned message state sync
 function updatePinnedMessageBar() {
     const bar = $('pinnedMessageBar');
     if (!bar) return;
@@ -1059,6 +984,7 @@ function unpinMessage(key) {
     toast('Message unpinned.', 'info');
 }
 
+// Initiate Reply Sequence
 function initiateReply(m) {
     let snippet = m.content || '[Attachment]';
     if (snippet.startsWith('>>reply:')) {
@@ -1078,6 +1004,7 @@ function initiateReply(m) {
     $('msgInput').focus();
 }
 
+// Initiate Edit Sequence
 function initiateEdit(m) {
     let text = m.content;
     if (text.startsWith('>>reply:')) {
@@ -1093,6 +1020,7 @@ function initiateEdit(m) {
     $('msgInput').focus();
 }
 
+// Delete Message Call
 async function deleteMessage(id) {
     if (!confirm('Are you sure you want to delete this message?')) return;
     try {
@@ -1103,6 +1031,7 @@ async function deleteMessage(id) {
     }
 }
 
+// Send Message Payload
 async function sendMessage() {
     const input = $('msgInput');
     let content = input.value.trim();
@@ -1112,7 +1041,6 @@ async function sendMessage() {
     if (!state.activeChat) return;
 
     if (state.editingMessage) {
-        // Edit Mode
         try {
             await state.connection.invoke('EditMessage', state.editingMessage.id, content);
             input.value = '';
@@ -1122,7 +1050,6 @@ async function sendMessage() {
         return;
     }
 
-    // Normal Send Mode
     if (state.replyingTo) {
         content = `>>reply:${state.replyingTo.id}:${state.replyingTo.senderName}:${state.replyingTo.snippet}<<${content}`;
     }
@@ -1145,6 +1072,46 @@ async function sendMessage() {
         $('attachmentPreviewBar').classList.remove('active');
         $('fileAttachmentInput').value = '';
     } catch (e) { toast(e.message, 'error'); }
+}
+
+/* ==========================================================================
+   9. POPUPS, MODALS & SETTINGS PANELS
+   ========================================================================== */
+
+// Upload File Attachments
+async function uploadAttachment(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+        toast('Uploading file...', 'info');
+        const headers = {};
+        if (state.token) headers['Authorization'] = `Bearer ${state.token}`;
+        
+        const res = await fetch(`${API_BASE}/api/messages/upload`, {
+            method: 'POST',
+            headers,
+            body: formData
+        });
+
+        if (!res.ok) {
+            const err = await res.json();
+            throw new Error(err.error || 'Upload failed');
+        }
+
+        const data = await res.json();
+        state.pendingAttachment = data; // { url, fileName, attachmentType }
+        
+        $('attachmentPreviewName').textContent = file.name;
+        $('attachmentPreviewBar').classList.add('active');
+        toast('File uploaded.', 'success');
+    } catch (err) {
+        toast(err.message, 'error');
+        $('fileAttachmentInput').value = '';
+    }
 }
 
 // Edit Profile settings modal
@@ -1271,17 +1238,15 @@ function showEditProfileModal() {
     $('modalBackdrop').classList.add('active');
 }
 
-
-// Read-only profile panel (drawer > My Profile)
+// Read-only My Profile Panel
 function showProfilePanel() {
     const m = state.me;
     if (!m) return;
     const content = $('modalContent');
-    const avatarHtml = m.avatarUrl
-        ? `background-image:url(${m.avatarUrl});background-size:cover;background-position:center;`
-        : '';
+    const avatarHtml = m.avatarUrl ? `background-image:url(${m.avatarUrl});background-size:cover;background-position:center;` : '';
     const initLetter = initials(m.displayName);
     const status = state.presenceMap[m.userId] || 'Online';
+    
     content.innerHTML = `
         <h2>My Profile</h2>
         
@@ -1326,15 +1291,14 @@ function showProfilePanel() {
     $('modalBackdrop').classList.add('active');
 }
 
-// Chat Info / Settings side panel
+// Side Info Chat/Contact Settings modal panel
 function showChatSettingsPanel(target) {
     const content = $('modalContent');
     if (target.type === 'private') {
         const contact = state.contacts.find(c => c.userId === target.id) || {};
         const status = state.presenceMap[target.id] || 'Offline';
-        const avatarHtml = contact.avatarUrl
-            ? `background-image:url(${contact.avatarUrl});background-size:cover;background-position:center;`
-            : '';
+        const avatarHtml = contact.avatarUrl ? `background-image:url(${contact.avatarUrl});background-size:cover;background-position:center;` : '';
+        
         content.innerHTML = `
             <h2>Contact Settings</h2>
             
@@ -1361,7 +1325,7 @@ function showChatSettingsPanel(target) {
 
             <div class="form-group">
                 <label>Contact Since</label>
-                <input type="text" value="${contact.addedAtUtc ? new Date(contact.addedAtUtc+'Z').toLocaleDateString() : '—'}" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
+                <input type="text" value="${contact.addedAtUtc ? new Date(contact.addedAtUtc + 'Z').toLocaleDateString() : '—'}" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
             </div>
 
             <div class="modal-actions">
@@ -1402,9 +1366,16 @@ function showChatSettingsPanel(target) {
 
                 <div class="modal-actions">
                     <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                    <button class="btn" id="btnManageMembersGroup" style="background-color: var(--msgchat-dark);">Manage Members</button>
                     <button class="btn btn-danger" id="btnLeaveGroupPanel">Leave Group</button>
                 </div>
             `;
+            
+            $('btnManageMembersGroup').onclick = () => {
+                closeModal();
+                showGroupInfoModal(target.id);
+            };
+            
             $('btnLeaveGroupPanel').onclick = async () => {
                 try {
                     await api(`/api/groups/${target.id}/members/${state.me.userId}`, { method: 'DELETE' });
@@ -1422,7 +1393,7 @@ function showChatSettingsPanel(target) {
     $('modalBackdrop').classList.add('active');
 }
 
-// Settings Modal (app-wide settings)
+// Application settings modal panel
 function showSettingsModal() {
     const content = $('modalContent');
     const isDark = document.body.classList.contains('dark-theme');
@@ -1466,19 +1437,19 @@ function showSettingsModal() {
     $('settingsPresence').value = activeStatus;
     const savedSize = localStorage.getItem('msg_font_size') || '14px';
     $('settingsFontSize').value = savedSize;
+    
     $('btnSaveSettings').onclick = async () => {
         const theme = $('settingsTheme').value;
         const fontSize = $('settingsFontSize').value;
         const presence = $('settingsPresence').value;
+        
         if (theme === 'dark') {
             document.body.classList.remove('light-theme');
             document.body.classList.add('dark-theme');
-            $('nightModeToggle').checked = true;
             localStorage.setItem('night_mode', 'true');
         } else {
             document.body.classList.remove('dark-theme');
             document.body.classList.add('light-theme');
-            $('nightModeToggle').checked = false;
             localStorage.setItem('night_mode', 'false');
         }
         document.documentElement.style.setProperty('--msg-font-size', fontSize);
@@ -1493,7 +1464,74 @@ function showSettingsModal() {
     $('modalBackdrop').classList.add('active');
 }
 
-// Group Modals
+// Render Group Details and Member Management Modal
+async function showGroupInfoModal(groupId) {
+    try {
+        const g = await api(`/api/groups/${groupId}`);
+        const content = $('modalContent');
+        content.innerHTML = `
+            <h2>${escapeHtml(g.name)}</h2>
+            <div style="margin-bottom:20px; max-height: 250px; overflow-y: auto;">
+                ${g.members.map(m => `
+                    <div style="display:flex;align-items:center;gap:12px;padding:8px 0;border-bottom:1px solid var(--border-color);">
+                        <div class="avatar" id="membAvatar-${m.userId}" style="width:30px;height:30px;font-size:11px;"></div>
+                        <div style="flex:1;">
+                            ${escapeHtml(m.displayName)} 
+                            ${m.isAdmin ? '<span class="badge badge-admin">Admin</span>' : ''}
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <div class="form-group">
+                <label>Add Member</label>
+                <select id="addMemberSelect">
+                    <option value="">-- select contact --</option>
+                    ${state.contacts.filter(c => !g.members.some(m => m.userId === c.userId)).map(c => `
+                        <option value="${c.userId}">${escapeHtml(c.displayName)}</option>
+                    `).join('')}
+                </select>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-danger" id="btnLeaveGroup">Leave Group</button>
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                <button class="btn" id="btnAddMember">Add</button>
+            </div>
+        `;
+
+        g.members.forEach(m => {
+            renderAvatarEl($(`membAvatar-${m.userId}`), m.displayName, m.avatarUrl);
+        });
+
+        $('modalBackdrop').classList.add('active');
+
+        $('btnAddMember').onclick = async () => {
+            const userId = $('addMemberSelect').value;
+            if (!userId) return;
+            try {
+                await api(`/api/groups/${groupId}/members`, {
+                    method: 'POST',
+                    body: JSON.stringify({ userId })
+                });
+                toast('Member added.', 'success');
+                closeModal();
+            } catch (e) { toast(e.message, 'error'); }
+        };
+
+        $('btnLeaveGroup').onclick = async () => {
+            try {
+                await api(`/api/groups/${groupId}/members/${state.me.userId}`, { method: 'DELETE' });
+                toast('Left group.', 'success');
+                closeModal();
+                await loadGroups();
+                state.activeChat = null;
+                $('chatPane').innerHTML = '<div class="empty-state">Select a contact or group to start chatting.</div>';
+                renderSidebar();
+            } catch (e) { toast(e.message, 'error'); }
+        };
+    } catch (e) { toast(e.message, 'error'); }
+}
+
+// Create Group Modal
 function openNewGroupModal() {
     const content = $('modalContent');
     content.innerHTML = `
@@ -1537,6 +1575,7 @@ function openNewGroupModal() {
     };
 }
 
+// Bulk messaging modal panel
 function openBulkMsgModal() {
     const content = $('modalContent');
     content.innerHTML = `
@@ -1575,7 +1614,11 @@ function openBulkMsgModal() {
     };
 }
 
-// Admin panel rendering
+/* ==========================================================================
+   10. ADMINISTRATIVE CONTROL PANEL
+   ========================================================================== */
+
+// Render admin panel user dashboard list
 async function renderAdminPanel() {
     try {
         state.adminUsers = await api('/api/admin/users');
@@ -1608,6 +1651,7 @@ async function renderAdminPanel() {
     } catch (e) { toast(e.message, 'error'); }
 }
 
+// User ban/suspension popup details modal
 function showAdminUserModal(user) {
     const content = $('modalContent');
     content.innerHTML = `
@@ -1665,7 +1709,10 @@ function showAdminUserModal(user) {
     }
 }
 
-// Modal Close helper
+/* ==========================================================================
+   11. SYSTEM INITIALIZATION SETUP
+   ========================================================================== */
+
 function closeModal() {
     $('modalBackdrop').classList.remove('active');
 }
@@ -1675,7 +1722,7 @@ $('modalBackdrop').onclick = (e) => {
     if (e.target.id === 'modalBackdrop') closeModal();
 };
 
-// Init application
+// Auto-Login and Application Initialize
 (async function init() {
     const saved = localStorage.getItem('chatapp_token');
     if (saved) {
