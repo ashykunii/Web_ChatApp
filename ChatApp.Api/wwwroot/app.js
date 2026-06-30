@@ -1,23 +1,24 @@
 const API_BASE = window.location.origin;
 const HUB_URL  = `${API_BASE}/hubs/chat`;
 
-// State
+// Global Application State
 const state = {
-    token: null,
-    me: null,                // { userId, userName, displayName, role, avatarUrl }
-    connection: null,        // SignalR connection
-    contacts: [],            // ContactDto[]
-    groups: [],              // GroupDto[]
-    activeChat: null,        // { type: 'private'|'group', id, name }
-    activeTab: 'contacts',
-    messages: [],            // messages for current chat
-    oldestCursor: null,
-    hasMore: false,
-    presenceMap: {},         // userId -> status string
-    adminUsers: [],
-    pendingAttachment: null, // { url, fileName, attachmentType }
-    replyingTo: null,        // { id, senderName, snippet }
-    editingMessage: null     // MessageDto currently being edited
+    token: null,             // JWT Auth Token
+    me: null,                // Logged-in User Info: { userId, userName, displayName, role, avatarUrl }
+    connection: null,        // SignalR Connection instance
+    contacts: [],            // List of contact objects
+    groups: [],              // List of group objects
+    activeChat: null,        // Currently opened chat room: { type: 'private'|'group', id, name }
+    activeTab: 'chats',      // Current sidebar tab: 'chats' (combined), 'contacts' (contacts only), 'groups', 'admin'
+    messages: [],            // Messages loaded in the current active chat room
+    oldestCursor: null,      // Cursor pointer for paginated historical message loading
+    hasMore: false,          // Boolean flag indicating if older messages exist on server
+    presenceMap: {},         // Presence map caching user presence status: userId -> status string
+    adminUsers: [],          // Cache of all users for admin management panel
+    pendingAttachment: null, // Temporary attachment storage before sending: { url, fileName, attachmentType }
+    replyingTo: null,        // Message reference information when replying: { id, senderName, snippet }
+    editingMessage: null,    // Message reference information when editing: MessageDto
+    pinnedMessages: JSON.parse(localStorage.getItem('chatapp_pinned') || '{}') // Pinned messages cache
 };
 
 // Helpers
@@ -379,12 +380,58 @@ async function loadGroups() {
     } catch (e) { toast(e.message, 'error'); }
 }
 
-// Sidebar Rendering
 function renderSidebar() {
     const list = $('sidebarList');
     list.innerHTML = '';
 
-    if (state.activeTab === 'contacts') {
+    // Renders the sidebar based on active navigation tab
+    if (state.activeTab === 'chats') {
+        // Combined Tab: Merge groups and contacts/chats together on the side
+        const combined = [];
+        state.contacts.forEach(c => combined.push({ type: 'private', data: c, name: c.displayName }));
+        state.groups.forEach(g => combined.push({ type: 'group', data: g, name: g.name }));
+        
+        // Sort merged items alphabetically by name/title
+        combined.sort((a, b) => a.name.localeCompare(b.name));
+        
+        combined.forEach(item => {
+            const div = document.createElement('div');
+            if (item.type === 'private') {
+                const c = item.data;
+                const status = state.presenceMap[c.userId] || c.presenceStatus;
+                div.className = 'list-item' + (state.activeChat?.type === 'private' && state.activeChat?.id === c.userId ? ' active' : '');
+                
+                const avatarDiv = document.createElement('div');
+                avatarDiv.className = 'avatar';
+                renderAvatarEl(avatarDiv, c.displayName, c.avatarUrl);
+                div.appendChild(avatarDiv);
+
+                const infoDiv = document.createElement('div');
+                infoDiv.className = 'info';
+                infoDiv.innerHTML = `
+                    <div class="name">${escapeHtml(c.displayName)}</div>
+                    <div class="sub"><span class="presence-dot presence-${status}"></span>${status}</div>
+                `;
+                div.appendChild(infoDiv);
+                div.onclick = () => openChat({ type: 'private', id: c.userId, name: c.displayName });
+            } else {
+                const g = item.data;
+                div.className = 'list-item' + (state.activeChat?.type === 'group' && state.activeChat?.id === g.id ? ' active' : '');
+                div.innerHTML = `
+                    <div class="avatar">#</div>
+                    <div class="info">
+                        <div class="name">${escapeHtml(g.name)}</div>
+                        <div class="sub">${g.memberCount} members</div>
+                    </div>
+                `;
+                div.onclick = () => openChat({ type: 'group', id: g.id, name: g.name });
+            }
+            list.appendChild(div);
+        });
+        if (combined.length === 0) {
+            list.innerHTML = '<div style="padding:16px;color:var(--text-sub);font-size:13px;text-align:center;">No chats or groups found.</div>';
+        }
+    } else if (state.activeTab === 'contacts') {
         state.contacts.forEach(c => {
             const status = state.presenceMap[c.userId] || c.presenceStatus;
             const div = document.createElement('div');
@@ -573,6 +620,17 @@ async function openChat(target) {
                 </div>
             </div>
         </div>
+
+        <!-- Pinned Message Bar -->
+        <div class="pinned-message-bar" id="pinnedMessageBar">
+            <div class="pinned-border"></div>
+            <div class="pinned-content" id="pinnedContent">
+                <div class="pinned-title">Pinned Message</div>
+                <div class="pinned-text" id="pinnedText"></div>
+            </div>
+            <button class="pinned-close" id="btnUnpinMsg" title="Unpin message">&times;</button>
+        </div>
+
         <div class="messages" id="messagesArea"></div>
         
         <div class="chat-input-container">
@@ -695,6 +753,7 @@ async function openChat(target) {
     };
 
     await loadMessageHistory();
+    updatePinnedMessageBar();
     renderSidebar();
 }
 
@@ -816,9 +875,9 @@ function renderMessages(scrollToBottom = true) {
         const wrapper = document.createElement('div');
         wrapper.className = 'message-bubble-wrapper';
 
-        // Telegram Bubble
+        // msgchat Bubble
         const bubble = document.createElement('div');
-        bubble.className = 'telegram-bubble';
+        bubble.className = 'msgchat-bubble';
 
         // Parse reply prefix format: >>reply:id:sender:snippet<<ActualText
         let textContent = m.content;
@@ -883,14 +942,10 @@ function renderMessages(scrollToBottom = true) {
 function showContextMenu(e, m) {
     const menu = $('msgContextMenu');
     menu.classList.add('active');
-    
-    // Position menu near cursor
-    menu.style.top = `${e.clientY}px`;
-    menu.style.left = `${e.clientX}px`;
 
-    // Bind action callbacks
+    // Bind action callbacks first (menu sizing depends on which rows are visible)
     $('msgCtxReply').onclick = () => { initiateReply(m); menu.classList.remove('active'); };
-    
+
     // Copy Text Option
     $('msgCtxCopy').onclick = () => {
         let textToCopy = m.content;
@@ -904,7 +959,7 @@ function showContextMenu(e, m) {
 
     // Pin Message Option
     $('msgCtxPin').onclick = () => {
-        toast('Message pinned to top.', 'success');
+        pinMessage(m);
         menu.classList.remove('active');
     };
 
@@ -924,6 +979,24 @@ function showContextMenu(e, m) {
     } else {
         $('msgCtxDelete').style.display = 'none';
     }
+
+    // Position menu near the cursor, clamped so it stays fully on-screen
+    const menuRect = menu.getBoundingClientRect();
+    const margin = 8;
+    let top = e.clientY;
+    let left = e.clientX;
+
+    if (left + menuRect.width + margin > window.innerWidth) {
+        left = window.innerWidth - menuRect.width - margin;
+    }
+    if (top + menuRect.height + margin > window.innerHeight) {
+        top = window.innerHeight - menuRect.height - margin;
+    }
+    left = Math.max(margin, left);
+    top = Math.max(margin, top);
+
+    menu.style.top = `${top}px`;
+    menu.style.left = `${left}px`;
 }
 
 function scrollToMessage(id) {
@@ -938,6 +1011,52 @@ function scrollToMessage(id) {
     } else {
         toast('Message not found in loaded history.', 'info');
     }
+}
+
+function updatePinnedMessageBar() {
+    const bar = $('pinnedMessageBar');
+    if (!bar) return;
+    if (!state.activeChat) {
+        bar.classList.remove('active');
+        return;
+    }
+    const key = `${state.activeChat.type}:${state.activeChat.id}`;
+    const pinned = state.pinnedMessages[key];
+    if (pinned) {
+        $('pinnedText').textContent = pinned.content;
+        bar.classList.add('active');
+        $('pinnedContent').onclick = () => scrollToMessage(pinned.id);
+        $('btnUnpinMsg').onclick = (e) => {
+            e.stopPropagation();
+            unpinMessage(key);
+        };
+    } else {
+        bar.classList.remove('active');
+    }
+}
+
+function pinMessage(m) {
+    if (!state.activeChat) return;
+    const key = `${state.activeChat.type}:${state.activeChat.id}`;
+    let snippet = m.content || '[Attachment]';
+    if (snippet.startsWith('>>reply:')) {
+        snippet = snippet.split('<<').slice(1).join('<<');
+    }
+    state.pinnedMessages[key] = {
+        id: m.id,
+        content: snippet,
+        senderName: m.senderDisplayName
+    };
+    localStorage.setItem('chatapp_pinned', JSON.stringify(state.pinnedMessages));
+    updatePinnedMessageBar();
+    toast('Message pinned successfully.', 'success');
+}
+
+function unpinMessage(key) {
+    delete state.pinnedMessages[key];
+    localStorage.setItem('chatapp_pinned', JSON.stringify(state.pinnedMessages));
+    updatePinnedMessageBar();
+    toast('Message unpinned.', 'info');
 }
 
 function initiateReply(m) {
@@ -1164,35 +1283,44 @@ function showProfilePanel() {
     const initLetter = initials(m.displayName);
     const status = state.presenceMap[m.userId] || 'Online';
     content.innerHTML = `
-        <div class="profile-panel">
-            <div class="profile-panel-cover"></div>
-            <div class="profile-panel-avatar" style="${avatarHtml}">${m.avatarUrl ? '' : initLetter}</div>
-            <div class="profile-panel-name">${escapeHtml(m.displayName)}</div>
-            <div class="profile-panel-username">@${escapeHtml(m.userName)}</div>
-            <div class="profile-panel-status">
-                <span class="presence-dot presence-${status}"></span> ${status}
-            </div>
-            <div class="profile-panel-info">
-                <div class="profile-info-row">
-                    <span class="profile-info-label">Email</span>
-                    <span class="profile-info-value">${escapeHtml(m.email || '—')}</span>
-                </div>
-                <div class="profile-info-row">
-                    <span class="profile-info-label">Username</span>
-                    <span class="profile-info-value">@${escapeHtml(m.userName)}</span>
-                </div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
-                <button class="btn" onclick="closeModal(); showEditProfileModal();">Edit Profile</button>
-            </div>
+        <h2>My Profile</h2>
+        
+        <div class="profile-avatar-upload">
+            <div class="avatar profile-avatar-preview" id="profileAvatarPreview" style="${avatarHtml}">${m.avatarUrl ? '' : initLetter}</div>
+        </div>
+
+        <div class="form-group">
+            <label>Display Name</label>
+            <input type="text" value="${escapeHtml(m.displayName)}" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
+        </div>
+        
+        <div class="form-group">
+            <label>Email Address</label>
+            <input type="email" id="profileEmailReadOnly" value="${escapeHtml(m.email || '—')}" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
+        </div>
+
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" value="@${escapeHtml(m.userName)}" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
+        </div>
+
+        <div class="form-group">
+            <label>Presence Status</label>
+            <select disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;">
+                <option value="${status}">${status}</option>
+            </select>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+            <button class="btn" onclick="closeModal(); showEditProfileModal();">Edit Profile</button>
         </div>
     `;
     if (!m.email) {
         api('/api/auth/me').then(me => {
             state.me.email = me.email;
-            const v = content.querySelector('.profile-info-value');
-            if (v) v.textContent = me.email || '—';
+            const el = $('profileEmailReadOnly');
+            if (el) el.value = me.email || '—';
         }).catch(() => {});
     }
     $('modalBackdrop').classList.add('active');
@@ -1208,49 +1336,73 @@ function showChatSettingsPanel(target) {
             ? `background-image:url(${contact.avatarUrl});background-size:cover;background-position:center;`
             : '';
         content.innerHTML = `
-            <div class="profile-panel">
-                <div class="profile-panel-cover"></div>
-                <div class="profile-panel-avatar" style="${avatarHtml}">${contact.avatarUrl ? '' : initials(target.name)}</div>
-                <div class="profile-panel-name">${escapeHtml(target.name)}</div>
-                <div class="profile-panel-status">
-                    <span class="presence-dot presence-${status}"></span> ${status}
-                </div>
-                <div class="profile-panel-info">
-                    <div class="profile-info-row">
-                        <span class="profile-info-label">Username</span>
-                        <span class="profile-info-value">@${escapeHtml(contact.userName || '—')}</span>
-                    </div>
-                    <div class="profile-info-row">
-                        <span class="profile-info-label">Contact since</span>
-                        <span class="profile-info-value">${contact.addedAtUtc ? new Date(contact.addedAtUtc+'Z').toLocaleDateString() : '—'}</span>
-                    </div>
-                </div>
-                <div class="modal-actions">
-                    <button class="btn btn-secondary" onclick="closeModal()">Close</button>
-                </div>
+            <h2>Contact Settings</h2>
+            
+            <div class="profile-avatar-upload">
+                <div class="avatar profile-avatar-preview" id="contactAvatarPreview" style="${avatarHtml}">${contact.avatarUrl ? '' : initials(target.name)}</div>
+            </div>
+
+            <div class="form-group">
+                <label>Display Name</label>
+                <input type="text" value="${escapeHtml(target.name)}" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
+            </div>
+
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" value="@${escapeHtml(contact.userName || '—')}" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
+            </div>
+
+            <div class="form-group">
+                <label>Presence Status</label>
+                <select disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;">
+                    <option value="${status}">${status}</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Contact Since</label>
+                <input type="text" value="${contact.addedAtUtc ? new Date(contact.addedAtUtc+'Z').toLocaleDateString() : '—'}" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn btn-secondary" onclick="closeModal()">Close</button>
             </div>
         `;
     } else {
         api(`/api/groups/${target.id}`).then(g => {
             content.innerHTML = `
-                <div class="profile-panel">
-                    <div class="profile-panel-cover" style="background:linear-gradient(135deg,#3a8c55,#2f7244);"></div>
-                    <div class="profile-panel-avatar" style="font-size:28px;">#</div>
-                    <div class="profile-panel-name">${escapeHtml(g.name)}</div>
-                    <div class="profile-panel-username">${g.memberCount} members</div>
-                    <div class="profile-panel-info">
-                        ${g.members.slice(0,5).map(m => `
-                            <div class="profile-info-row">
-                                <span class="presence-dot presence-${m.presenceStatus || 'Offline'}"></span>
-                                <span class="profile-info-value">${escapeHtml(m.displayName)}${m.isAdmin ? ' <span class="badge badge-admin">Admin</span>' : ''}</span>
+                <h2>Group Settings</h2>
+                
+                <div class="profile-avatar-upload">
+                    <div class="avatar profile-avatar-preview" style="font-size:28px;">#</div>
+                </div>
+
+                <div class="form-group">
+                    <label>Group Name</label>
+                    <input type="text" value="${escapeHtml(g.name)}" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
+                </div>
+
+                <div class="form-group">
+                    <label>Member Count</label>
+                    <input type="text" value="${g.memberCount} members" disabled style="background-color: var(--input-bg); opacity: 0.8; cursor: not-allowed;" />
+                </div>
+
+                <div class="form-group">
+                    <label>Members (First 5)</label>
+                    <div style="background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px;">
+                        ${g.members.slice(0, 5).map(m => `
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                <span style="font-size:13px; color:var(--text-main); font-weight:500;">${escapeHtml(m.displayName)}${m.isAdmin ? ' <span class="badge badge-admin" style="margin-left:4px;">Admin</span>' : ''}</span>
+                                <span style="font-size:11px; color:var(--text-sub);">${m.presenceStatus || 'Offline'}</span>
                             </div>
                         `).join('')}
-                        ${g.memberCount > 5 ? `<div style="font-size:12px;color:var(--text-sub);padding:4px 0;">+${g.memberCount-5} more</div>` : ''}
+                        ${g.memberCount > 5 ? `<div style="font-size:12px; color:var(--text-sub); margin-top: 6px;">+ ${g.memberCount - 5} more members</div>` : ''}
                     </div>
-                    <div class="modal-actions">
-                        <button class="btn btn-secondary" onclick="closeModal()">Close</button>
-                        <button class="btn btn-danger" id="btnLeaveGroupPanel">Leave Group</button>
-                    </div>
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" onclick="closeModal()">Close</button>
+                    <button class="btn btn-danger" id="btnLeaveGroupPanel">Leave Group</button>
                 </div>
             `;
             $('btnLeaveGroupPanel').onclick = async () => {
