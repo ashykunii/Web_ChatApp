@@ -27,7 +27,8 @@ This project is built using **Clean Architecture** (also known as Onion Architec
                             │
                             ▼
         ┌────────────────────────────────────────┐
-        │             ChatApp.Domain             │ (Core Entities & Interfaces)                  └────────────────────────────────────────┘
+        │             ChatApp.Domain             │ (Core Entities & Interfaces)                  
+        └────────────────────────────────────────┘
 ```
 
 This project used these technologies: 
