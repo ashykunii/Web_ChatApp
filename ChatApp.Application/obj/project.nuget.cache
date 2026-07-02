@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "AfVi2LaZ6hI=",
+  "dgSpecHash": "DMo9xeBUthg=",
   "success": true,
   "projectFilePath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Application\\ChatApp.Application.csproj",
   "expectedPackageFiles": [
@@ -20,13 +20,7 @@
     "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\10.0.9\\microsoft.extensions.logging.abstractions.10.0.9.nupkg.sha512",
     "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.extensions.options\\10.0.9\\microsoft.extensions.options.10.0.9.nupkg.sha512",
     "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.extensions.options.configurationextensions\\10.0.9\\microsoft.extensions.options.configurationextensions.10.0.9.nupkg.sha512",
-    "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.extensions.primitives\\10.0.9\\microsoft.extensions.primitives.10.0.9.nupkg.sha512",
-    "C:\\Users\\Sorya Sok\\.nuget\\packages\\system.componentmodel.annotations\\5.0.0\\system.componentmodel.annotations.5.0.0.nupkg.sha512",
-    "C:\\Users\\Sorya Sok\\.nuget\\packages\\system.diagnostics.diagnosticsource\\10.0.9\\system.diagnostics.diagnosticsource.10.0.9.nupkg.sha512",
-    "C:\\Users\\Sorya Sok\\.nuget\\packages\\system.memory\\4.6.3\\system.memory.4.6.3.nupkg.sha512",
-    "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.netcore.app.ref\\8.0.27\\microsoft.netcore.app.ref.8.0.27.nupkg.sha512",
-    "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.windowsdesktop.app.ref\\8.0.27\\microsoft.windowsdesktop.app.ref.8.0.27.nupkg.sha512",
-    "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.aspnetcore.app.ref\\8.0.27\\microsoft.aspnetcore.app.ref.8.0.27.nupkg.sha512"
+    "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.extensions.primitives\\10.0.9\\microsoft.extensions.primitives.10.0.9.nupkg.sha512"
   ],
   "logs": []
 }

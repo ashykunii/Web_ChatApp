@@ -2,6 +2,19 @@
 
 Welcome to **`Web_ChatApp`**, a real-time, responsive, single-page chat application built with a modern clean-architecture .NET stack and vanilla frontend technologies.
 
+## Table of Contents
+
+- [About the Project](#about-the-project)
+- [Architectural Overview](#architectural-overview)
+- [Key Features](#key-features)
+- [Tech Stacks](#tech-stacks)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Project Structure](#project-structure)
+- [API References](#api-references)
+- [Academic Credits](#academic-credits)
+
+
 ## About the Project
 
 **`Web_ChatApp`** provides a seamless and interactive platform for users to connect and communicate in real time. It supports direct messaging between users and group conversations, with features like presence status, message pinning, replies, editing, and file attachments. 
@@ -101,7 +114,7 @@ Here is a detailed breakdown of the core technologies utilized in this applicati
 ## Installation
 
 ### Prerequisites
-* **.NET 8.0 SDK** (Builds the API application service)
+* **.NET 10.0 SDK** (Builds the API application service)
 * A modern browser (Chrome, Edge, Firefox, Safari)
 
 ### Step-by-Step Setup
@@ -127,7 +140,23 @@ Here is a detailed breakdown of the core technologies utilized in this applicati
    ```
 
 5. **Access the Application**:
-   Open a browser window and navigate to `http://localhost:5163` to view the chat interface. You can access the API Swagger workspace directly at `http://localhost:5163/swagger`.
+    > Open a browser window and navigate to `http://localhost:5163` to view the chat interface. You can access the API Swagger workspace directly at `http://localhost:5163/swagger`.
+
+
+
+## Extra commands for terminal (Windows PowerShell)
+These are some extra commands that can be used in the terminal (Windows PowerShell):
+```bash
+# Purge and clean solution assemblies
+dotnet clean
+# Terminate running background engine operations forcefully
+Stop-Process -Name dotnet -Force -ErrorAction SilentlyContinue      
+# Terminate localized web host processes cleanly
+Stop-Process -Name Web_ChatApp* -Force -ErrorAction SilentlyContinue
+# Trigger solution build compilation verify pass
+dotnet build
+
+```
 
 ## Usage
 
@@ -135,17 +164,18 @@ Here is a detailed breakdown of the core technologies utilized in this applicati
     *   Upon launching the application, you will be presented with a login/registration screen.
     *   Register a new account or log in with existing credentials. Bellow are some testing accounts to use if you don't have one, unless you create a new account:
 
-**Admin**;
-```
-{
-    "username": "admin",
-    "password": "Admin123!"
-}
-```
-**Testing**;
-```
+**Testing01 Account**;
+```json
 {
     "username": "Testing01",
+    "password": "password123"
+}
+```
+
+**Testing02 Account**;
+```json
+{
+    "username": "Testing02",
     "password": "password123"
 }
 ```
@@ -214,7 +244,7 @@ Web_ChatApp/
 └── README.md
 ```
 
-## API Reference (Inferred)
+## API References
 
 Based on the `app.js` and controller files, the following API endpoints are likely available:
 
@@ -244,22 +274,18 @@ Based on the `app.js` and controller files, the following API endpoints are like
     *   `POST /api/admin/ban/{userId}`
     *   `POST /api/admin/unban/{userId}`
 
-## Author of this project
 
-Developed and Designed by SOK Sorya.
-Lecturer by Mr. Tongsreng, Web Application Development with ASP.NET Core.
+## Academic Credits
 
-## License
+* **Project Name:** Web_ChatApp
+* **Repository Source:** [GitHub Repository Link](https://github.com/ashykunii/Web_ChatApp)
+* **Author / Developer / Designer:** SOK Sorya
+* **Course Assignment:** Final Project Evaluation
+* **Course Title:** Web Application Development with ASP.NET Core
+* **Supervising Lecturer:** Mr. Tongsreng
+* **License:** This application and its underlying source structure are developed and licensed exclusively for **educational and personal use only**.
 
-This project is for educational and personal use only, and was developed as a final project.
+>Read our deep-dive architectural decisions in the [Tech Stack Documentation](./TECH-STACK.md).
 
-## Footer
-
-**Web_ChatApp**
-
-*   [Repository](https://github.com/ashykunii/Web_ChatApp)
-*   **Author:** ashykunii
-
-
-
-
+<br><br>
+<center>©2026 SOK Sorya, All Rights Reserved.</center>
