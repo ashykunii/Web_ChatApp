@@ -971,11 +971,11 @@ body.dark-theme .bubble-reply-ref:hover {
     color: var(--text-sub);
     opacity: 0.6;
     vertical-align: middle;
-    transition: color 0.3s ease, opacity 0.3s ease;
+    transition: color 0.35s ease, opacity 0.35s ease;
 }
 
 .seen-check.seen {
-    color: var(--msgchat-dark);
+    color: #34d465;   /* vivid WhatsApp-style green tick */
     opacity: 1;
 }
 

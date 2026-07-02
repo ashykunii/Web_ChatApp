@@ -78,5 +78,30 @@ public class MessageRepository : IMessageRepository
         return true;
     }
 
+    public async Task<bool> MarkAsSeenAsync(long messageId, string recipientId)
+    {
+        var msg = await _db.Messages.FindAsync(messageId);
+        if (msg == null)
+        {
+            Console.WriteLine($"[Repo] Message not found for Id: {messageId}");
+            return false;
+        }
+        if (msg.RecipientId != recipientId)
+        {
+            Console.WriteLine($"[Repo] Recipient mismatch: msg.RecipientId={msg.RecipientId}, expected={recipientId}");
+            return false;
+        }
+        if (msg.IsReadAt.HasValue)
+        {
+            Console.WriteLine($"[Repo] Message already read at: {msg.IsReadAt}");
+            return false;
+        }
+
+        msg.IsReadAt = DateTime.UtcNow;
+        await _db.SaveChangesAsync();
+        Console.WriteLine($"[Repo] Successfully marked message {messageId} as read at {msg.IsReadAt}");
+        return true;
+    }
+
     public Task SaveChangesAsync() => _db.SaveChangesAsync();
 }

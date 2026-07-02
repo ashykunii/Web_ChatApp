@@ -11,24 +11,24 @@ Chat App provides a seamless and interactive platform for users to connect and c
 This project is built using **Clean Architecture** (also known as Onion Architecture) principles in ASP.NET Core, separating domain models, application use-cases, database infrastructure, and presentation logic into distinct projects:
 
 ```
-        ┌────────────────────────────────────────┐
-        │              ChatApp.Api               │ (Presentation & WebSocket Hubs)
-        └───────────────────┬────────────────────┘
-                            │
-                            ▼
-        ┌────────────────────────────────────────┐
-        │          ChatApp.Application           │ (Business Logic & Use Cases)
-        └───────────────────┬────────────────────┘
-                            │
-                            ▼
-        ┌────────────────────────────────────────┐
-        │          ChatApp.Infrastructure        │ (Data Context & Repositories)
-        └───────────────────┬────────────────────┘
-                            │
-                            ▼
-        ┌────────────────────────────────────────┐
-        │             ChatApp.Domain             │ (Core Entities & Interfaces)                  
-        └────────────────────────────────────────┘
+    ┌────────────────────────────────────────┐
+    │              ChatApp.Api               │ (Presentation & WebSocket Hubs)
+    └───────────────────┬────────────────────┘
+                        │
+                        ▼
+    ┌────────────────────────────────────────┐
+    │          ChatApp.Application           │ (Business Logic & Use Cases)
+    └───────────────────┬────────────────────┘
+                        │
+                        ▼
+    ┌────────────────────────────────────────┐
+    │          ChatApp.Infrastructure        │ (Data Context & Repositories)
+    └───────────────────┬────────────────────┘
+                        │
+                        ▼
+    ┌────────────────────────────────────────┐
+    │             ChatApp.Domain             │ (Core Entities & Interfaces)                  
+    └────────────────────────────────────────┘
 ```
 
 This project used these technologies: 
@@ -63,7 +63,6 @@ This project used these technologies:
 *   **Message Actions:** Includes replying, editing, deleting, and pinning messages.
 *   **Attachments:** Allows users to send images and other file types.
 *   **User Profiles:** Manage display names, avatars, and presence status.
-*   **Dark Mode:** Offers a customizable dark theme for comfortable viewing.
 *   **Admin Panel:** Provides tools for managing users, including banning and unbanning.
 *   **Search Functionality:** Easily find contacts and groups.
 *   **User Blocking:** Enables users to block unwanted contacts.
@@ -118,20 +117,21 @@ This project used these technologies:
     *   Upon launching the application, you will be presented with a login/registration screen.
     *   Register a new account or log in with existing credentials. Bellow are some testing accounts to use if you don't have one, unless you create a new account:
 
-Admin;
+**Admin**;
 ```
 {
     "username": "admin",
     "password": "Admin123!"
 }
 ```
-Testing;
+**Testing**;
 ```
 {
     "username": "Testing01",
     "password": "password123"
 }
 ```
+
 2.  **Navigating the App:**
     *   **Sidebar:** Displays contacts and groups. You can switch between "Chats", "Contacts", and "Groups" views.
     *   **Search:** Use the search bar at the top of the sidebar to find users.
@@ -229,12 +229,11 @@ Based on the `app.js` and controller files, the following API endpoints are like
 ## Author of this project
 
 Developed and Designed by SOK Sorya.
-Lecturer by Mr.Tongsreng, Web Application Development with ASP.NET Core
+Lecturer by Mr. Tongsreng, Web Application Development with ASP.NET Core.
 
 ## License
 
-This project is for educational and personal use only, and was developed as a practical project.
-
+This project is for educational and personal use only, and was developed as a final project.
 
 ## Footer
 

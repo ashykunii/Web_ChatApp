@@ -292,6 +292,11 @@ async function connectHub() {
                 }
             } else {
                 state.messages.push(msg);
+                // If this is an incoming private message, mark it as seen immediately
+                if (msg.senderId !== state.me.userId && msg.recipientId === state.me.userId) {
+                    console.log("Incoming message - invoking MarkSeen for messageId:", msg.id);
+                    state.connection.invoke('MarkSeen', msg.id).catch(err => console.error("MarkSeen error:", err));
+                }
             }
             renderMessages();
         } else {
@@ -327,6 +332,7 @@ async function connectHub() {
 
     // Message Read Confirmation Receipt
     state.connection.on('MessageSeen', (messageId) => {
+        console.log("Client received MessageSeen event for messageId:", messageId);
         const idx = state.messages.findIndex(m => m.id === messageId);
         if (idx !== -1) {
             state.messages[idx].isSeen = true;
@@ -706,6 +712,7 @@ async function openChat(target) {
     };
 
     await loadMessageHistory();
+    markIncomingMessagesAsSeen();
     updatePinnedMessageBar();
     renderSidebar();
 }
@@ -725,6 +732,20 @@ async function loadMessageHistory() {
         state.messages = [...page.items, ...state.messages];
         renderMessages(true);
     } catch (e) { toast(e.message, 'error'); }
+}
+
+// Mark all unread incoming private messages in the current chat as seen
+function markIncomingMessagesAsSeen() {
+    const chat = state.activeChat;
+    if (!chat || chat.type !== 'private' || !state.connection) return;
+
+    state.messages.forEach(m => {
+        // Only mark messages sent TO me that haven't been seen yet
+        if (m.senderId !== state.me.userId && m.recipientId === state.me.userId && !m.isSeen) {
+            console.log("History loaded - invoking MarkSeen for messageId:", m.id);
+            state.connection.invoke('MarkSeen', m.id).catch(err => console.error("MarkSeen error:", err));
+        }
+    });
 }
 
 /* ==========================================================================

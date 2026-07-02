@@ -12,6 +12,7 @@ public class Message
     public MessageType Type { get; set; } = MessageType.Private;
     public DateTime SentAtUtc { get; set; }     // always set server-side, never from client
     public bool IsDeleted { get; set; } = false;
+    public DateTime? IsReadAt { get; set; }         // set when the recipient opens/reads the message
     public string? AttachmentUrl { get; set; }
     public string? AttachmentFileName { get; set; }
     public string? AttachmentType { get; set; }

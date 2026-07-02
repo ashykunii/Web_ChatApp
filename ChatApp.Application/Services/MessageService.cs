@@ -159,9 +159,14 @@ public class MessageService : IMessageService
         return await _messages.UpdateContentAsync(messageId, userId, newContent);
     }
 
+    public async Task<bool> MarkAsSeenAsync(long messageId, string recipientId)
+    {
+        return await _messages.MarkAsSeenAsync(messageId, recipientId);
+    }
+
     private static MessageDto ToDto(Message m, string senderName, string? senderAvatarUrl = null) =>
         new(m.Id, m.SenderId, senderName, m.RecipientId, m.GroupId,
             m.IsDeleted ? "[deleted]" : m.Content, m.SentAtUtc, m.IsDeleted,
             m.AttachmentUrl, m.AttachmentFileName, m.AttachmentType,
-            senderAvatarUrl);
+            senderAvatarUrl, m.IsReadAt.HasValue);
 }

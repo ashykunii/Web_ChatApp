@@ -153,6 +153,18 @@ public class ChatHub : Hub
         }
     }
 
+    public async Task MarkSeen(long messageId)
+    {
+        Console.WriteLine($"[Hub] MarkSeen called for messageId: {messageId} by UserId: {UserId}");
+        var ok = await _messages.MarkAsSeenAsync(messageId, UserId);
+        Console.WriteLine($"[Hub] MarkAsSeenAsync result: {ok}");
+        if (ok)
+        {
+            await Clients.All.SendAsync("MessageSeen", messageId);
+            Console.WriteLine($"[Hub] Broadcasted MessageSeen for messageId: {messageId}");
+        }
+    }
+
     // ── Presence ──────────────────────────────────────────────────────────────
 
     public async Task SetPresence(PresenceStatus status)

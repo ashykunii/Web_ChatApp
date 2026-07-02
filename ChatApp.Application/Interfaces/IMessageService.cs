@@ -17,4 +17,5 @@ public interface IMessageService
     Task<IReadOnlyList<int>> GetUserGroupIdsAsync(string userId);
     Task<bool> DeleteMessageAsync(long messageId, string userId);
     Task<bool> UpdateMessageAsync(long messageId, string userId, string newContent);
+    Task<bool> MarkAsSeenAsync(long messageId, string recipientId);
 }

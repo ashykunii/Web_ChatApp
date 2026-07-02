@@ -12,5 +12,6 @@ public interface IMessageRepository
         int groupId, long? cursor, int take);
     Task<bool> DeleteAsync(long messageId, string requestingUserId);
     Task<bool> UpdateContentAsync(long messageId, string requestingUserId, string newContent);
+    Task<bool> MarkAsSeenAsync(long messageId, string recipientId);
     Task SaveChangesAsync();
 }

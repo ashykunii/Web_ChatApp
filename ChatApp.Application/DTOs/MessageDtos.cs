@@ -12,7 +12,8 @@ public record MessageDto(
     string? AttachmentUrl = null,
     string? AttachmentFileName = null,
     string? AttachmentType = null,
-    string? SenderAvatarUrl = null);
+    string? SenderAvatarUrl = null,
+    bool IsSeen = false);
 
 public record SendPrivateMessageRequest(string RecipientId, string Content);
 
