@@ -1,14 +1,14 @@
 # Web_ChatApp 
 
-Welcome to **Web_ChatApp**, a real-time, responsive, single-page chat application built with a modern clean-architecture .NET stack and vanilla frontend technologies.
+Welcome to **`Web_ChatApp`**, a real-time, responsive, single-page chat application built with a modern clean-architecture .NET stack and vanilla frontend technologies.
 
 ## About the Project
 
-Chat App provides a seamless and interactive platform for users to connect and communicate in real time. It supports direct messaging between users and group conversations, with features like presence status, message pinning, replies, editing, and file attachments. 
+**`Web_ChatApp`** provides a seamless and interactive platform for users to connect and communicate in real time. It supports direct messaging between users and group conversations, with features like presence status, message pinning, replies, editing, and file attachments. 
 
 ##  Architectural Overview
 
-This project is built using **Clean Architecture** (also known as Onion Architecture) principles in ASP.NET Core, separating domain models, application use-cases, database infrastructure, and presentation logic into distinct projects:
+This project is built using **Clean Architecture** (also known as **`Onion Architecture`**) principles in ASP.NET Core, separating domain models, application use-cases, database infrastructure, and presentation logic into distinct projects:
 
 ```
     ┌────────────────────────────────────────┐
@@ -55,61 +55,79 @@ This project used these technologies:
    - Provides authentication and authorization between clients and the server.
    
 
-## Features
+## Key Features
 
-*   **Real-time Messaging:** Utilizes SignalR for instant message delivery.
-*   **Direct & Group Chats:** Supports both one-on-one conversations and group discussions.
-*   **User Presence:** Displays user online/offline status.
-*   **Message Actions:** Includes replying, editing, deleting, and pinning messages.
-*   **Attachments:** Allows users to send images and other file types.
-*   **User Profiles:** Manage display names, avatars, and presence status.
-*   **Admin Panel:** Provides tools for managing users, including banning and unbanning.
-*   **Search Functionality:** Easily find contacts and groups.
-*   **User Blocking:** Enables users to block unwanted contacts.
+* **Real-time Synchronization**: Instant message dispatch, delivery tracking, edits, deletes, and online presence indicators via SignalR.
+* **Direct Messaging (DM)**: Safe, private 1-on-1 chats between authenticated contacts.
+* **Group Conversations**: Dynamic chat rooms with multi-user participants, customizable roles, and member management controls.
+* **Smart Presence Status**: Automatic switching between `Online`, `Away`, `DoNotDisturb`, and `Offline` modes.
+* **Message Interactions**: Message quoting (replies), real-time edits, global deletes, and dynamic chat pins.
+* **Media & File Uploads**: Built-in uploading system for sharing images (with auto-preview) and arbitrary documents (with download links).
+* **Double-Accent Theme Engine**: Fluent night/dark and light styling modes prioritizing soothing forest green and modern navy palettes.
+* **Administrative Suite**: Special sidebar panel to manage users, ban violators, and enforce terms of service globally in real-time.
+* **Security & Audits**: JWT bearer token authorization, password hashing, and custom middleware checking account ban statuses on every API call.
 
-## Tech Stack
+## Tech Stacks
 
-*   **Frontend:** HTML, CSS, JavaScript (with SignalR)
-*   **Backend:** C# (.NET)
-*   **Frameworks:** Next.js (though not explicitly used in the provided entry points, it's listed as a framework), TypeScript (also listed, but JS is primary in the entry point)
-*   **Database:** SQLite (inferred from `chat.db` files)
+Here is a detailed breakdown of the core technologies utilized in this application and their respective roles:
+
+### Backend Services
+* **ASP.NET Core Web API (.NET 8.0)**
+  * *Role*: Serves as the robust, cross-platform backend hosting RESTful API endpoints for user account authentication, profile adjustments, contacts loading, and group management.
+
+* **ASP.NET Core SignalR (v8.0.7)**
+  * *Role*: Handles real-time bi-directional messaging communications between the server and all connected clients.
+
+* **Entity Framework Core 8.0**
+  * *Role*: The Object-Relational Mapper (ORM) representing the data access layer.
+
+* **SQLite Database**
+  * *Role*: Relational database system stored locally in `ChatApp.Api/chat.db`.
+* **JWT Bearer Token Authentication**
+  * *Role*: Secures REST API calls and WebSocket connections.
+
+### Frontend Application
+* **HTML5 & Vanilla CSS3**
+  * *Role*: App layout structure, layout styling, and design system themes.
+* **Vanilla JavaScript (ES6+)**
+  * *Role*: State management, event handlers, SignalR client connections, fetch API utilities, and dynamic page DOM rendering.
+
+### API Documentation & Development
+* **OpenAPI / Swagger UI**
+  * *Role*: Interactive API sandbox playground.
+
+---
 
 ## Installation
 
-1.  **Prerequisites:**
-    *   .NET SDK (for running the API)
-    *   Node.js (for frontend development, although the provided entry points are plain JS/HTML)
+### Prerequisites
+* **.NET 8.0 SDK** (Builds the API application service)
+* A modern browser (Chrome, Edge, Firefox, Safari)
 
-2.  **Clone the Repository:**
-    ```bash
-    git clone https://github.com/ashykunii/Web_ChatApp.git
-    cd Web_ChatApp
-    ```
+### Step-by-Step Setup
+1. **Clone the project repository**:
+   ```bash
+   git clone https://github.com/ashykunii/Web_ChatApp.git
+   cd Web_ChatApp
+   ```
+2. **Restore NuGet dependencies**:
+   ```bash
+   dotnet restore
+   ```
+3. **Run database migrations**:
+   The application uses EF Core migrations. Apply them to generate the SQLite database:
+   ```bash
+   dotnet ef database update --project ChatApp.Infrastructure --startup-project ChatApp.Api
+   ```
+   *(Note: The repository already contains a seeded `chat.db` for quick-start testing)*.
 
-3.  **Backend Setup (ChatApp.Api):**
-    *   Navigate to the `ChatApp.Api` directory.
-    *   Ensure the database file (`chat.db`) and its related WAL and SHM files are present or can be generated upon first run.
-    *   Run the application using the .NET CLI:
+4. **Launch the Application**:
+   ```bash
+   dotnet run --project ChatApp.Api
+   ```
 
-        ```bash
-        dotnet run --project ChatApp.Api
-        ```
-
-    * If the application fails to run, try to restore the dependencies first:
-
-    ```bash
-    dotnet restore
-    ```
-
-    * Then try to run the application again:
-
-    ```bash
-    dotnet run --project ChatApp.Api
-    ```
-
-4.  **Frontend:**
-    *   The frontend is served statically from `ChatApp.Api/wwwroot`.
-    *   Ensure you have a web server that can serve static files or run the ASP.NET Core application, which hosts the frontend.
+5. **Access the Application**:
+   Open a browser window and navigate to `http://localhost:5163` to view the chat interface. You can access the API Swagger workspace directly at `http://localhost:5163/swagger`.
 
 ## Usage
 
