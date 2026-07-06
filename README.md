@@ -163,7 +163,7 @@ dotnet run --project ChatApp.Api --no-launch-profile
 ```
 
 ### Resolving Browser Caching (If you see the old version of the interface)
-Browsers aggressively cache CSS (`style.css`) and JavaScript (`app.js`). If you do not see the new UI changes (such as the Info panel, Search overlay, or Emoji button), perform the following actions:
+Browsers aggressively cache CSS (`style.css`) and JavaScript (`app.js`).
 
 1. **Force a Hard Refresh**:
    * **Windows/Linux**: Press `Ctrl` + `F5` or `Ctrl` + `Shift` + `R` (Chrome/Edge/Firefox).

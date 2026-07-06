@@ -160,6 +160,7 @@ function updateDrawerProfile() {
 $('drawerMenuProfile').onclick  = () => { closeDrawer(); showProfilePanel(); };
 $('drawerMenuNewGroup').onclick = () => { closeDrawer(); openNewGroupModal(); };
 $('drawerMenuContacts').onclick = () => { closeDrawer(); selectTab('contacts'); };
+$('drawerMenuBulkMessage').onclick = () => { closeDrawer(); openBulkMsgModal(); };
 $('drawerMenuSettings').onclick = () => { closeDrawer(); showSettingsModal(); };
 $('menuLogout').onclick          = () => { logout(); };
 
@@ -700,8 +701,9 @@ async function openChat(target) {
                         <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
                     </label>
                     <button class="emoji-trigger-btn" id="btnEmojiTrigger" type="button" title="Emojis" onclick="toggleEmojiPicker(event)">
-                        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5c-1.78 0-3.3-1.07-4-2.6h8c-.7 1.53-2.22 2.6-4 2.6zm-3.5-6c-.83 0-1.5-.67-1.5-1.5S7.67 6.5 8.5 6.5s1.5.67 1.5 1.5S9.33 9.5 8.5 9.5zm7 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
-                    </button>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" fill="currentColor" class="bi bi-emoji-smile-fill" viewBox="0 0 16 16">
+                    <path d="M8 16A8 8 0 1 0 8 0a8 8 0 0 0 0 16M7 6.5C7 7.328 6.552 8 6 8s-1-.672-1-1.5S5.448 5 6 5s1 .672 1 1.5M4.285 9.567a.5.5 0 0 1 .683.183A3.5 3.5 0 0 0 8 11.5a3.5 3.5 0 0 0 3.032-1.75.5.5 0 1 1 .866.5A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1-3.898-2.25.5.5 0 0 1 .183-.683M10 8c-.552 0-1-.672-1-1.5S9.448 5 10 5s1 .672 1 1.5S10.552 8 10 8"/></svg>
+                </button>
                     <textarea id="msgInput" placeholder="Write a message..."></textarea>
                     <button class="btn-send-msg" id="btnSend">
                         <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
@@ -1873,23 +1875,57 @@ async function openInfoPanel(target) {
         if (target.type === 'private') {
             const contact = state.contacts.find(c => c.userId === target.id) || {};
             const status = state.presenceMap[target.id] || 'Offline';
-            const avatarHtml = contact.avatarUrl ? `background-image:url(${contact.avatarUrl});background-size:cover;background-position:center;` : '';
-            
+            const statusColor = status === 'Online' ? '#4cd48a' : status === 'Away' ? '#f1c40f' : '#95a5a6';
+            const avatarBg = contact.avatarUrl
+                ? `background-image:url(${contact.avatarUrl});background-size:cover;background-position:center;`
+                : '';
+            const msgCount = state.messages.filter(m =>
+                (m.senderId === target.id || m.recipientId === target.id) && m.attachmentType === 'image'
+            ).length;
+            const fileCount = state.messages.filter(m =>
+                (m.senderId === target.id || m.recipientId === target.id) && m.attachmentUrl && m.attachmentType !== 'image'
+            ).length;
+            const totalMsgs = state.messages.length;
+
             body.innerHTML = `
+                <!-- Avatar / Identity -->
                 <div class="info-panel-section">
-                    <div class="info-panel-avatar" style="${avatarHtml}">${contact.avatarUrl ? '' : initials(target.name)}</div>
+                    <div class="info-panel-avatar" style="${avatarBg}">${contact.avatarUrl ? '' : initials(target.name)}</div>
                     <div class="info-panel-name">${escapeHtml(target.name)}</div>
-                    <div class="info-panel-status">${status}</div>
+                    <div class="info-panel-status" style="color:${statusColor}">
+                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${statusColor};margin-right:5px;"></span>${status}
+                    </div>
+                    <div class="info-actions">
+                        <button class="info-action-btn" onclick="closeInfoPanel()" title="Go to chat">Message</button>
+                        <button class="info-action-btn" id="infoPanelBlockBtn" title="Block/Unblock">Block</button>
+                    </div>
                 </div>
+
+                <!-- Contact Details -->
                 <div class="info-panel-section" style="align-items: flex-start; text-align: left;">
                     <div class="info-panel-label">Username</div>
                     <div class="info-panel-value">@${escapeHtml(contact.userName || '—')}</div>
-                    
                     <div class="info-panel-label">Contact Since</div>
-                    <div class="info-panel-value">${contact.addedAtUtc ? new Date(contact.addedAtUtc + 'Z').toLocaleDateString() : '—'}</div>
+                    <div class="info-panel-value" style="margin-bottom: 0;">${contact.addedAtUtc ? new Date(contact.addedAtUtc + 'Z').toLocaleDateString() : '—'}</div>
                 </div>
-                <div class="info-panel-section" style="border-bottom:none; width: 100%;">
-                    <button class="btn btn-secondary" id="infoPanelBlockBtn" style="width: 100%; margin-bottom: 8px;">Toggle Block User</button>
+
+                <!-- Shared Media Stats -->
+                <div class="info-panel-section" style="align-items: flex-start; text-align: left; border-bottom: none;">
+                    <div class="info-panel-label">Shared Media</div>
+                    <div class="info-media-grid">
+                        <div class="info-media-stat">
+                            <div class="info-media-num">${msgCount}</div>
+                            <div class="info-media-lbl">Photos</div>
+                        </div>
+                        <div class="info-media-stat">
+                            <div class="info-media-num">${fileCount}</div>
+                            <div class="info-media-lbl">Files</div>
+                        </div>
+                        <div class="info-media-stat">
+                            <div class="info-media-num">${totalMsgs}</div>
+                            <div class="info-media-lbl">Messages</div>
+                        </div>
+                    </div>
                 </div>
             `;
 
@@ -1901,21 +1937,39 @@ async function openInfoPanel(target) {
                     try {
                         await api(`/api/contacts/block/${target.id}`, { method: 'DELETE' });
                         toast('User unblocked.', 'success');
-                    } catch (err) {
-                        toast(err.message, 'error');
-                    }
+                    } catch (err) { toast(err.message, 'error'); }
                 }
             };
 
         } else {
             const g = await api(`/api/groups/${target.id}`);
             const isMeAdmin = g.members.some(m => m.userId === state.me.userId && m.isAdmin);
-            
+            const groupMsgCount = state.messages.filter(m => m.groupId === target.id && m.attachmentType === 'image').length;
+            const groupFileCount = state.messages.filter(m => m.groupId === target.id && m.attachmentUrl && m.attachmentType !== 'image').length;
+            const groupTotalMsgs = state.messages.filter(m => m.groupId === target.id).length;
+
             body.innerHTML = `
                 <div class="info-panel-section">
                     <div class="info-panel-avatar">#</div>
                     <div class="info-panel-name">${escapeHtml(g.name)}</div>
                     <div class="info-panel-status">${g.memberCount} members</div>
+                </div>
+                <div class="info-panel-section" style="align-items: flex-start; text-align: left;">
+                    <div class="info-panel-label">Shared Media</div>
+                    <div class="info-media-grid">
+                        <div class="info-media-stat">
+                            <div class="info-media-num">${groupMsgCount}</div>
+                            <div class="info-media-lbl">Photos</div>
+                        </div>
+                        <div class="info-media-stat">
+                            <div class="info-media-num">${groupFileCount}</div>
+                            <div class="info-media-lbl">Files</div>
+                        </div>
+                        <div class="info-media-stat">
+                            <div class="info-media-num">${groupTotalMsgs}</div>
+                            <div class="info-media-lbl">Messages</div>
+                        </div>
+                    </div>
                 </div>
                 <div class="info-panel-section" style="align-items: flex-start; text-align: left;">
                     <div class="info-panel-label">Members</div>
@@ -1987,10 +2041,12 @@ function toggleSearchOverlay() {
 window.toggleSearchOverlay = toggleSearchOverlay;
 
 function clearSearchHighlighting() {
-    const msgTexts = document.querySelectorAll('.msg-text');
-    msgTexts.forEach(el => {
+    // Target the actual bubble-text divs inside msgchat-bubble elements
+    const textEls = document.querySelectorAll('.bubble-text');
+    textEls.forEach(el => {
         if (el.dataset.originalContent) {
             el.innerHTML = el.dataset.originalContent;
+            delete el.dataset.originalContent;
         }
     });
     searchMatches = [];
@@ -2003,31 +2059,33 @@ function runMessageSearch() {
     clearSearchHighlighting();
     if (!query) return;
 
-    const msgBubbles = document.querySelectorAll('.msg-bubble');
+    // Target .bubble-text divs (actual text containers in renderMessages)
+    const textEls = document.querySelectorAll('.msgchat-bubble .bubble-text');
     searchMatches = [];
 
-    msgBubbles.forEach(bubble => {
-        const textEl = bubble.querySelector('.msg-text');
-        if (!textEl) return;
+    textEls.forEach(textEl => {
+        const textDiv = textEl.querySelector('div');
+        if (!textDiv) return;
 
         if (!textEl.dataset.originalContent) {
             textEl.dataset.originalContent = textEl.innerHTML;
         }
 
-        const originalText = textEl.textContent || '';
+        const originalText = textDiv.textContent || '';
         if (originalText.toLowerCase().includes(query)) {
             const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
-            textEl.innerHTML = textEl.dataset.originalContent.replace(regex, '<mark class="search-match">$1</mark>');
-            
-            const markEls = textEl.querySelectorAll('mark.search-match');
-            markEls.forEach(mark => {
-                searchMatches.push(mark);
-            });
+            // Only highlight inside the text div, not attachment HTML
+            const safeText = escapeHtml(originalText);
+            textDiv.innerHTML = safeText.replace(regex, '<mark class="search-match">$1</mark>');
+
+            const markEls = textDiv.querySelectorAll('mark.search-match');
+            markEls.forEach(mark => searchMatches.push(mark));
         }
     });
 
     if (searchMatches.length > 0) {
-        currentSearchIndex = searchMatches.length - 1;
+        // Start from first (oldest) match
+        currentSearchIndex = 0;
         highlightCurrentSearchMatch();
     } else {
         $('chatSearchCount').textContent = '0 of 0';
@@ -2061,29 +2119,66 @@ function escapeRegExp(string) {
 }
 
 // ── Emoji Picker Popup ──
-const POPULAR_EMOJIS = [
-    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
-    '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
-    '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥸',
-    '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️',
-    '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡',
-    '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓',
-    '🤗', '🤔', '🫣', '🤭', '🤫', '🤥', '😶', '😶‍🌫️', '😐', '😑',
-    '😬', '🫨', '🫠', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱',
-    '😴', '🤤', '😪', '😵', '😵‍💫', '🤐', '🥴', '🤢', '🤮', '🤧',
-    '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡',
-    '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸',
-    '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉',
-    '👆', '🖕', '👇', '☝️', '👍', '👊', '✊', '🤛', '🤜', '👏',
-    '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾'
-];
-
+const EMOJI_GROUPS = {
+    Smileys:['😀','😁','😂','🤣','😊','😍','🥰','😘','😎','😭','😡','🤢','🥺','😜','🤥','🤧','🤔','🤐','🤨','🤓','😴','😮','😶'],
+    Gestures:['👍','👎','👏','🙏','🤝','👌','✌️','🤘','💪','👈','👉','👆','👇'],
+    Animals:['🐶','🐱','🐭','🐼','🦊','🐯','🐵','🐰','🦁','🐼','🐧','🐼','🐸','🐷'],
+    Food:['🍎','🍔','🍕','🍟','🍩','🍰','🍉','🍓','🍇','🍦','🎂','🥟'],
+    Travel:['🚗','✈️','🚀','🚲','🚢','🌍','🌏','🌋'],
+    Objects:['💡','📱','💻','⌚','📷','🎁'],
+    Symbols:['❤️','💙','💚','💛','🔥','✨','💯']
+};
 function initEmojiPicker() {
     const picker = $('emojiPickerPopup');
     if (!picker) return;
-    picker.innerHTML = POPULAR_EMOJIS.map(emoji => `
-        <span class="emoji-item" onclick="insertEmoji('${emoji}')">${emoji}</span>
-    `).join('');
+
+    picker.innerHTML = `
+        <div class="emoji-search">
+            <input
+                id="emojiSearch"
+                type="text"
+                placeholder="Search emoji..."
+            >
+        </div>
+
+        <div class="emoji-body" id="emojiBody"></div>
+    `;
+
+    renderEmojiGroups("");
+
+    $('emojiSearch').addEventListener('input', e=>{
+        renderEmojiGroups(e.target.value.toLowerCase());
+    });
+}
+
+function renderEmojiGroups(filter){
+
+    const body=$('emojiBody');
+    body.innerHTML="";
+
+    Object.entries(EMOJI_GROUPS).forEach(([title,list])=>{
+
+        const filtered=list.filter(e=>e.includes(filter)||filter==="");
+
+        if(filtered.length===0) return;
+
+        const section=document.createElement("div");
+        section.className="emoji-category";
+
+        section.innerHTML=`
+            <div class="emoji-title">${title}</div>
+            <div class="emoji-grid">
+                ${filtered.map(e=>`
+                    <span class="emoji-item"
+                        onclick="insertEmoji('${e}')">${e}</span>
+                `).join("")}
+            </div>
+        `;
+
+        body.appendChild(section);
+
+    });
+
 }
 
 function insertEmoji(emoji) {

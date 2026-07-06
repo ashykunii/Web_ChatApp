@@ -543,6 +543,32 @@ input:disabled, select:disabled, textarea:disabled {
     background: none;
 }
 
+.drawer-submenu{
+    display:flex;
+    flex-direction:column;
+}
+
+.drawer-parent{
+    font-weight:500;
+}
+
+.drawer-child{
+    padding-left:56px !important;
+    font-size:13px;
+    color:var(--text-sub);
+    transition:all .2s;
+}
+
+.drawer-child:hover{
+    background:var(--sidebar-hover);
+    color:var(--text-main);
+}
+
+.drawer-child .menu-icon{
+    width:18px;
+    font-size:14px;
+}
+
 .drawer-footer {
     padding: 16px 20px;
     font-size: 10.5px;
@@ -1770,6 +1796,65 @@ body.dark-theme .file-attachment {
     margin-bottom: 16px;
 }
 
+/* Action Buttons Row (sits inside the avatar .info-panel-section) */
+.info-actions {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 14px;
+    width: 100%;
+}
+
+.info-action-btn {
+    flex: 1;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    color: var(--text-main);
+    cursor: pointer;
+    padding: 8px 14px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: inherit;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.info-action-btn:hover {
+    background-color: var(--sidebar-hover);
+    border-color: var(--msgchat-dark);
+}
+
+/* Shared Media Stats (used in both contact & group info panels) */
+.info-media-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+}
+
+.info-media-stat {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    background-color: var(--input-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    padding: 10px 6px;
+}
+
+.info-media-num {
+    font-size: 17px;
+    font-weight: 700;
+    color: var(--msgchat-dark);
+}
+
+.info-media-lbl {
+    font-size: 11px;
+    color: var(--text-sub);
+    margin-top: 2px;
+}
+
 /* ==========================================================================
    13. IN-CHAT MESSAGE SEARCH
    ========================================================================== */
@@ -1784,7 +1869,7 @@ body.dark-theme .file-attachment {
     display: none;
     align-items: center;
     padding: 0 16px;
-    z-index: 200;
+    z-index: 20;
     box-shadow: 0 2px 8px rgba(0,0,0,0.12);
 }
 .chat-search-overlay.active {
@@ -1854,41 +1939,87 @@ mark.search-match.selected {
 /* ==========================================================================
    14. EMOJI PICKER POPUP
    ========================================================================== */
-.emoji-picker-popup {
-    position: fixed;
-    bottom: 80px;
-    right: 24px;
-    width: 280px;
-    max-height: 220px;
-    background-color: var(--sidebar-bg);
-    border: 1px solid var(--border-color);
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
-    z-index: 300;
-    display: none;
-    padding: 8px;
-    overflow-y: auto;
-}
-.emoji-picker-popup.active {
-    display: grid;
-    grid-template-columns: repeat(7, 1fr);
-    gap: 6px;
-}
-.emoji-item {
-    font-size: 20px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    border-radius: 6px;
-    padding: 4px;
-    transition: transform 0.1s ease, background-color 0.1s ease;
-}
-.emoji-item:hover {
-    background-color: var(--sidebar-hover);
-    transform: scale(1.15);
+   .emoji-picker-popup{
+    position:absolute;
+    bottom:72px;
+    right:12px;      /* instead of left */
+    width:320px;
+    height:360px;
+    background:var(--sidebar-bg);
+    border:1px solid var(--border-color);
+    border-radius:16px;
+    box-shadow:0 16px 40px rgba(0,0,0,.18);
+    display:none;
+    flex-direction:column;
+    overflow:hidden;
+    z-index:999;
 }
 
+.emoji-picker-popup.active{
+    display:flex;
+}
+
+.emoji-search{
+    padding:12px;
+    border-bottom:1px solid var(--border-color);
+}
+
+.emoji-search input{
+    width:100%;
+    border:none;
+    outline:none;
+    border-radius:10px;
+    background:var(--input-bg);
+    padding:9px 12px;
+    font-size:13px;
+}
+
+.emoji-body{
+    overflow-y:auto;
+    flex:1;
+    padding:8px;
+}
+
+.emoji-category{
+    margin-bottom:14px;
+}
+
+.emoji-title{
+    font-size:11px;
+    font-weight:700;
+    color:var(--text-sub);
+    margin:6px 6px 8px;
+    text-transform:uppercase;
+    letter-spacing:.5px;
+}
+
+.emoji-grid{
+    display:grid;
+    grid-template-columns:repeat(7,1fr);
+    gap:4px;
+}
+
+.emoji-item{
+    width:40px;
+    height:40px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-size:24px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:.15s;
+    user-select:none;
+}
+
+.emoji-item:hover{
+    background:var(--sidebar-hover);
+    transform:scale(1.18);
+}
+
+.emoji-item:active{
+    transform:scale(.95);
+}
 /* ==========================================================================
    15. TYPING INDICATOR UI
    ========================================================================== */
