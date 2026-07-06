@@ -164,6 +164,16 @@ public class MessageService : IMessageService
         return await _messages.MarkAsSeenAsync(messageId, recipientId);
     }
 
+    public async Task ClearPrivateHistoryAsync(string userAId, string userBId)
+    {
+        await _messages.ClearPrivateHistoryAsync(userAId, userBId);
+    }
+
+    public async Task ClearGroupHistoryAsync(int groupId)
+    {
+        await _messages.ClearGroupHistoryAsync(groupId);
+    }
+
     private static MessageDto ToDto(Message m, string senderName, string? senderAvatarUrl = null) =>
         new(m.Id, m.SenderId, senderName, m.RecipientId, m.GroupId,
             m.IsDeleted ? "[deleted]" : m.Content, m.SentAtUtc, m.IsDeleted,

@@ -300,6 +300,14 @@ async function connectHub() {
             }
             renderMessages();
         } else {
+            // If this is a private message sent to me, increment the unread count for this contact
+            if (msg.recipientId === state.me.userId) {
+                const contact = state.contacts.find(c => c.userId === msg.senderId);
+                if (contact) {
+                    contact.unreadCount = (contact.unreadCount || 0) + 1;
+                    renderSidebar();
+                }
+            }
             const who = msg.senderDisplayName || 'Someone';
             let cleanContent = msg.content;
             if (cleanContent.startsWith('>>reply:')) {
@@ -415,6 +423,7 @@ function renderSidebar() {
         
         combined.sort((a, b) => a.name.localeCompare(b.name));
         
+
         combined.forEach(item => {
             const div = document.createElement('div');
             if (item.type === 'private') {
@@ -434,6 +443,14 @@ function renderSidebar() {
                     <div class="sub"><span class="presence-dot presence-${status}"></span>${status}</div>
                 `;
                 div.appendChild(infoDiv);
+
+                if (c.unreadCount && c.unreadCount > 0) {
+                    const badgeDiv = document.createElement('div');
+                    badgeDiv.className = 'unread-badge';
+                    badgeDiv.textContent = c.unreadCount;
+                    div.appendChild(badgeDiv);
+                }
+
                 div.onclick = () => openChat({ type: 'private', id: c.userId, name: c.displayName });
             } else {
                 const g = item.data;
@@ -470,6 +487,13 @@ function renderSidebar() {
                 <div class="sub"><span class="presence-dot presence-${status}"></span>${status}</div>
             `;
             div.appendChild(infoDiv);
+
+            if (c.unreadCount && c.unreadCount > 0) {
+                const badgeDiv = document.createElement('div');
+                badgeDiv.className = 'unread-badge';
+                badgeDiv.textContent = c.unreadCount;
+                div.appendChild(badgeDiv);
+            }
 
             div.onclick = () => openChat({ type: 'private', id: c.userId, name: c.displayName });
             list.appendChild(div);
@@ -555,6 +579,14 @@ async function openChat(target) {
     state.pendingAttachment = null;
     state.replyingTo = null;
     state.editingMessage = null;
+
+    if (target.type === 'private') {
+        const contact = state.contacts.find(c => c.userId === target.id);
+        if (contact && contact.unreadCount > 0) {
+            contact.unreadCount = 0;
+            renderSidebar();
+        }
+    }
 
     const pane = $('chatPane');
     pane.innerHTML = `
@@ -851,8 +883,9 @@ function renderMessages(scrollToBottom = true) {
               </span>`
             : '';
             
+        const senderLabel = isMine ? 'You' : (m.senderDisplayName || 'Unknown');
         bubble.innerHTML = `
-            ${!isMine && state.activeChat?.type === 'group' ? `<div class="bubble-sender">${escapeHtml(m.senderDisplayName)}</div>` : ''}
+            <div class="bubble-sender">${escapeHtml(senderLabel)}</div>
             ${replyRefHtml}
             <div class="bubble-text">
                 ${textContent ? `<div>${escapeHtml(textContent)}</div>` : ''}

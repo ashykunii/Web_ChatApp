@@ -13,5 +13,8 @@ public interface IMessageRepository
     Task<bool> DeleteAsync(long messageId, string requestingUserId);
     Task<bool> UpdateContentAsync(long messageId, string requestingUserId, string newContent);
     Task<bool> MarkAsSeenAsync(long messageId, string recipientId);
+    Task<Dictionary<string, int>> GetUnreadPrivateMessageCountsAsync(string recipientId);
+    Task ClearPrivateHistoryAsync(string userAId, string userBId);
+    Task ClearGroupHistoryAsync(int groupId);
     Task SaveChangesAsync();
 }

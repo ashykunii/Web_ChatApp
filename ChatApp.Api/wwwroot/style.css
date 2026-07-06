@@ -407,6 +407,24 @@ input:disabled, select:disabled, textarea:disabled {
 .presence-DoNotDisturb { background-color: #e74c3c; }
 .presence-Offline { background-color: #95a5a6; }
 
+/* Unread Message Notification Badge */
+.unread-badge {
+    background-color: var(--msgchat-dark);
+    color: #ffffff;
+    font-size: 11px;
+    font-weight: 600;
+    min-width: 20px;
+    height: 20px;
+    border-radius: 10px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 6px;
+    margin-left: auto;
+    flex-shrink: 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
 /* ==========================================================================
    5. SLIDE-OUT DRAWER & MENU
    ========================================================================== */

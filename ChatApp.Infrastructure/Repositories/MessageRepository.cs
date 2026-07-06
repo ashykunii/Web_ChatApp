@@ -103,5 +103,33 @@ public class MessageRepository : IMessageRepository
         return true;
     }
 
+    public async Task<Dictionary<string, int>> GetUnreadPrivateMessageCountsAsync(string recipientId)
+    {
+        return await _db.Messages
+            .Where(m => m.RecipientId == recipientId && m.IsReadAt == null && !m.IsDeleted)
+            .GroupBy(m => m.SenderId)
+            .Select(g => new { SenderId = g.Key, Count = g.Count() })
+            .ToDictionaryAsync(x => x.SenderId, x => x.Count);
+    }
+
+    public async Task ClearPrivateHistoryAsync(string userAId, string userBId)
+    {
+        var messages = await _db.Messages
+            .Where(m => (m.SenderId == userAId && m.RecipientId == userBId)
+                     || (m.SenderId == userBId && m.RecipientId == userAId))
+            .ToListAsync();
+        _db.Messages.RemoveRange(messages);
+        await _db.SaveChangesAsync();
+    }
+
+    public async Task ClearGroupHistoryAsync(int groupId)
+    {
+        var messages = await _db.Messages
+            .Where(m => m.GroupId == groupId)
+            .ToListAsync();
+        _db.Messages.RemoveRange(messages);
+        await _db.SaveChangesAsync();
+    }
+
     public Task SaveChangesAsync() => _db.SaveChangesAsync();
 }

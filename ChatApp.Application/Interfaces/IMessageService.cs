@@ -18,4 +18,6 @@ public interface IMessageService
     Task<bool> DeleteMessageAsync(long messageId, string userId);
     Task<bool> UpdateMessageAsync(long messageId, string userId, string newContent);
     Task<bool> MarkAsSeenAsync(long messageId, string recipientId);
+    Task ClearPrivateHistoryAsync(string userAId, string userBId);
+    Task ClearGroupHistoryAsync(int groupId);
 }

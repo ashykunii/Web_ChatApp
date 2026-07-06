@@ -10,20 +10,25 @@ public class ContactService : IContactService
     private readonly IContactRepository _contacts;
     private readonly IUserRepository _users;
     private readonly IModerationRepository _moderation;
+    private readonly IMessageRepository _messages;
 
     public ContactService(
         IContactRepository contacts,
         IUserRepository users,
-        IModerationRepository moderation)
+        IModerationRepository moderation,
+        IMessageRepository messages)
     {
         _contacts = contacts;
         _users = users;
         _moderation = moderation;
+        _messages = messages;
     }
 
     public async Task<IReadOnlyList<ContactDto>> GetContactsAsync(string ownerId)
     {
         var contacts = await _contacts.GetContactsAsync(ownerId);
+        var unreadCounts = await _messages.GetUnreadPrivateMessageCountsAsync(ownerId);
+
         return contacts
             .Select(c => new ContactDto(
                 c.ContactUserId,
@@ -31,7 +36,8 @@ public class ContactService : IContactService
                 c.ContactUser.UserName ?? "",
                 c.ContactUser.PresenceStatus.ToString(),
                 c.ContactUser.LastSeenUtc,
-                c.ContactUser.AvatarUrl))
+                c.ContactUser.AvatarUrl,
+                unreadCounts.TryGetValue(c.ContactUserId, out var count) ? count : 0))
             .ToList();
     }
 

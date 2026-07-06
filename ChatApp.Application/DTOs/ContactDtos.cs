@@ -6,6 +6,7 @@ public record ContactDto(
     string UserName,
     string PresenceStatus,
     DateTime LastSeenUtc,
-    string? AvatarUrl = null);
+    string? AvatarUrl = null,
+    int UnreadCount = 0);
 
 public record UserSearchResult(string UserId, string DisplayName, string UserName, bool IsContact, bool IsBlocked, string? AvatarUrl = null);
