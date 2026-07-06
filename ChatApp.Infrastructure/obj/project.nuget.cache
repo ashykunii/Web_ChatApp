@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "3Tf5GUVtr1w=",
+  "dgSpecHash": "QZzAyTRft8g=",
   "success": true,
-  "projectFilePath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatAppV2\\Web_ChatApp\\ChatApp.Infrastructure\\ChatApp.Infrastructure.csproj",
+  "projectFilePath": "C:\\Users\\Sorya Sok\\OneDrive\\Desktop\\SOFTWARE DEVELOPMENT\\Web_ChatApp\\ChatApp.Infrastructure\\ChatApp.Infrastructure.csproj",
   "expectedPackageFiles": [
     "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.aspnetcore.identity.entityframeworkcore\\10.0.9\\microsoft.aspnetcore.identity.entityframeworkcore.10.0.9.nupkg.sha512",
     "C:\\Users\\Sorya Sok\\.nuget\\packages\\microsoft.data.sqlite.core\\10.0.9\\microsoft.data.sqlite.core.10.0.9.nupkg.sha512",

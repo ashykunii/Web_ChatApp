@@ -71,8 +71,11 @@ The hub class itself is `[Authorize]`-protected, so an invalid/missing token rej
 | `MarkSeen` | read-receipt — flips `IsReadAt` server-side, then broadcasts `MessageSeen` |
 | `SetPresence` | user-driven presence status (Online/Away/etc — server alone controls `Offline`) |
 | `JoinGroupChannel` / `LeaveGroupChannel` | manual group membership sync when REST endpoints create/modify groups mid-session |
+| `SendTyping` | notifies target user that the current user is typing (real-time chat presence context) |
+| `ClearPrivateHistory` | wipes all private messages in the active thread and sends sync requests to the counter-party |
+| `ClearGroupHistory` | purges all messages inside the group for all participants and broadcasts the clear event |
 
-**Server → client events (`connection.on(...)`):** `ReceiveMessage`, `MessageDeleted`, `MessageEdited`, `MessageSeen`, `PresenceChanged`, `BulkMessageSent`.
+**Server → client events (`connection.on(...)`):** `ReceiveMessage`, `MessageDeleted`, `MessageEdited`, `MessageSeen`, `PresenceChanged`, `BulkMessageSent`, `UserTyping` (active typing indicator animation), `HistoryCleared` (forces UI refresh and thread clearing).
 
 **Client setup** (`app.js`):
 ```javascript

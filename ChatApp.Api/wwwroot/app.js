@@ -169,10 +169,17 @@ function selectTab(tab) {
 }
 
 // Close Dropdowns on Click Outside
-document.addEventListener('click', () => {
+document.addEventListener('click', (e) => {
     const drop = $('headerMenuDropdown');
-    if (drop) drop.classList.remove('active');
-    $('msgContextMenu').classList.remove('active');
+    if (drop && !e.target.closest('.header-actions')) drop.classList.remove('active');
+    
+    const emojiPicker = $('emojiPickerPopup');
+    if (emojiPicker && !e.target.closest('#emojiPickerPopup') && !e.target.closest('#btnEmojiTrigger')) {
+        emojiPicker.classList.remove('active');
+    }
+    
+    const ctx = $('msgContextMenu');
+    if (ctx) ctx.classList.remove('active');
 });
 
 /* ==========================================================================
@@ -256,6 +263,22 @@ async function enterApp() {
     await loadContacts();
     await loadGroups();
     renderSidebar();
+
+    const infoClose = $('infoPanelClose');
+    if (infoClose) infoClose.onclick = closeInfoPanel;
+    const infoOverlay = $('infoPanelOverlay');
+    if (infoOverlay) infoOverlay.onclick = closeInfoPanel;
+
+    const searchInput = $('chatSearchInput');
+    if (searchInput) searchInput.addEventListener('input', runMessageSearch);
+    const searchPrev = $('chatSearchPrev');
+    if (searchPrev) searchPrev.onclick = () => searchNavigate('prev');
+    const searchNext = $('chatSearchNext');
+    if (searchNext) searchNext.onclick = () => searchNavigate('next');
+    const searchClose = $('chatSearchClose');
+    if (searchClose) searchClose.onclick = toggleSearchOverlay;
+
+    initEmojiPicker();
 }
 
 /* ==========================================================================
@@ -369,6 +392,24 @@ async function connectHub() {
     state.connection.on('ForceDisconnect', (reason) => {
         toast(`Account banned: ${reason}`, 'error');
         setTimeout(() => logout(), 2000);
+    });
+
+    // User Typing Notification Handler
+    state.connection.on('UserTyping', (typingUserId, targetType, targetId, isTyping) => {
+        if (state.activeChat && 
+            ((state.activeChat.type === 'private' && targetType === 'private' && typingUserId === state.activeChat.id) ||
+             (state.activeChat.type === 'group' && targetType === 'group' && targetId === state.activeChat.id.toString() && typingUserId !== state.me.userId))) {
+            showTypingStatus(typingUserId, isTyping);
+        }
+    });
+
+    // Chat History Cleared Handler
+    state.connection.on('HistoryCleared', (chatType, chatId) => {
+        if (state.activeChat && state.activeChat.type === chatType && state.activeChat.id.toString() === chatId.toString()) {
+            state.messages = [];
+            renderMessages();
+            toast('Chat history cleared.', 'success');
+        }
     });
 
     try {
@@ -600,13 +641,14 @@ async function openChat(target) {
                     <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
                 </button>
                 <div class="header-menu-dropdown" id="headerMenuDropdown">
+                    <a id="menuViewInfo">View Info</a>
+                    <a id="menuSearchMessages">Search Messages</a>
                     ${target.type === 'private' ? `
                         <a id="menuBlock">Block User</a>
                         <a id="menuUnblock">Unblock User</a>
-                    ` : `
-                        <a id="menuGroupInfo">Group Details</a>
-                    `}
-                    <a id="menuSettings">Chat setting</a>
+                    ` : ''}
+                    <a id="menuClearHistory">Clear History</a>
+                    <a id="menuDeleteChat" class="danger">Delete Chat</a>
                 </div>
             </div>
         </div>
@@ -657,6 +699,9 @@ async function openChat(target) {
                     <label class="upload-btn-label" for="fileAttachmentInput" title="Attach file">
                         <svg viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>
                     </label>
+                    <button class="emoji-trigger-btn" id="btnEmojiTrigger" type="button" title="Emojis" onclick="toggleEmojiPicker(event)">
+                        <svg viewBox="0 0 24 24" width="20" height="20"><path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15.5c-1.78 0-3.3-1.07-4-2.6h8c-.7 1.53-2.22 2.6-4 2.6zm-3.5-6c-.83 0-1.5-.67-1.5-1.5S7.67 6.5 8.5 6.5s1.5.67 1.5 1.5S9.33 9.5 8.5 9.5zm7 0c-.83 0-1.5-.67-1.5-1.5s.67-1.5 1.5-1.5 1.5.67 1.5 1.5-.67 1.5-1.5 1.5z"/></svg>
+                    </button>
                     <textarea id="msgInput" placeholder="Write a message..."></textarea>
                     <button class="btn-send-msg" id="btnSend">
                         <svg viewBox="0 0 24 24" width="22" height="22"><path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/></svg>
@@ -667,10 +712,10 @@ async function openChat(target) {
     `;
 
     // Setup Header Action Dropdowns
+    const presence = target.type === 'private' ? (state.presenceMap[target.id] || 'Offline') : 'Group';
+    $('chatHeaderStatus').textContent = target.type === 'private' ? presence : 'loading details...';
+
     if (target.type === 'private') {
-        const presence = state.presenceMap[target.id] || 'Offline';
-        $('chatHeaderStatus').textContent = presence;
-        
         $('menuBlock').onclick = async (e) => {
             e.stopPropagation();
             $('headerMenuDropdown').classList.remove('active');
@@ -688,28 +733,35 @@ async function openChat(target) {
             } catch (e) { toast(e.message, 'error'); }
         };
     } else {
-        try {
-            const g = await api(`/api/groups/${target.id}`);
+        api(`/api/groups/${target.id}`).then(g => {
             $('chatHeaderStatus').textContent = `${g.members.length} members`;
-        } catch {
+        }).catch(() => {
             $('chatHeaderStatus').textContent = 'Group';
-        }
-        $('menuGroupInfo').onclick = (e) => {
-            e.stopPropagation();
-            $('headerMenuDropdown').classList.remove('active');
-            showGroupInfoModal(target.id);
-        };
+        });
     }
-    
-    $('menuSettings').onclick = (e) => {
+
+    $('menuViewInfo').onclick = (e) => {
         e.stopPropagation();
         $('headerMenuDropdown').classList.remove('active');
-        showChatSettingsPanel(target);
+        openInfoPanel(target);
     };
 
-    $('menuLogout').onclick = (e) => {
+    $('menuSearchMessages').onclick = (e) => {
         e.stopPropagation();
-        logout();
+        $('headerMenuDropdown').classList.remove('active');
+        toggleSearchOverlay();
+    };
+
+    $('menuClearHistory').onclick = (e) => {
+        e.stopPropagation();
+        $('headerMenuDropdown').classList.remove('active');
+        clearChatHistory(target);
+    };
+
+    $('menuDeleteChat').onclick = (e) => {
+        e.stopPropagation();
+        $('headerMenuDropdown').classList.remove('active');
+        deleteChat(target);
     };
 
     $('btnHeaderMenu').onclick = (e) => {
@@ -718,12 +770,15 @@ async function openChat(target) {
     };
 
     $('btnSend').onclick = sendMessage;
+    
     $('msgInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
             sendMessage();
         }
     });
+
+    $('msgInput').addEventListener('input', handleInputTyping);
 
     $('fileAttachmentInput').onchange = uploadAttachment;
     $('btnRemoveAttachment').onclick = () => {
@@ -1125,6 +1180,13 @@ async function sendMessage() {
         $('replyPreviewBar').classList.remove('active');
         $('attachmentPreviewBar').classList.remove('active');
         $('fileAttachmentInput').value = '';
+
+        if (localIsTyping) {
+            localIsTyping = false;
+            clearTimeout(stopTypingTimeout);
+            state.connection.invoke('SendTyping', state.activeChat.type, state.activeChat.id.toString(), false)
+                .catch(err => console.error(err));
+        }
     } catch (e) { toast(e.message, 'error'); }
 }
 
@@ -1791,3 +1853,357 @@ $('modalBackdrop').onclick = (e) => {
         }
     }
 })();
+
+/* ==========================================================================
+   12. MODERN FRONTEND FEATURES IMPLEMENTATIONS
+   ========================================================================== */
+
+// ── Contact / Group Details Slide-out Panel ──
+async function openInfoPanel(target) {
+    const overlay = $('infoPanelOverlay');
+    const panel = $('infoPanel');
+    const body = $('infoPanelBody');
+    if (!overlay || !panel || !body) return;
+
+    body.innerHTML = '<div style="padding:40px;text-align:center;color:var(--text-sub);">Loading details...</div>';
+    overlay.classList.add('active');
+    panel.classList.add('active');
+
+    try {
+        if (target.type === 'private') {
+            const contact = state.contacts.find(c => c.userId === target.id) || {};
+            const status = state.presenceMap[target.id] || 'Offline';
+            const avatarHtml = contact.avatarUrl ? `background-image:url(${contact.avatarUrl});background-size:cover;background-position:center;` : '';
+            
+            body.innerHTML = `
+                <div class="info-panel-section">
+                    <div class="info-panel-avatar" style="${avatarHtml}">${contact.avatarUrl ? '' : initials(target.name)}</div>
+                    <div class="info-panel-name">${escapeHtml(target.name)}</div>
+                    <div class="info-panel-status">${status}</div>
+                </div>
+                <div class="info-panel-section" style="align-items: flex-start; text-align: left;">
+                    <div class="info-panel-label">Username</div>
+                    <div class="info-panel-value">@${escapeHtml(contact.userName || '—')}</div>
+                    
+                    <div class="info-panel-label">Contact Since</div>
+                    <div class="info-panel-value">${contact.addedAtUtc ? new Date(contact.addedAtUtc + 'Z').toLocaleDateString() : '—'}</div>
+                </div>
+                <div class="info-panel-section" style="border-bottom:none; width: 100%;">
+                    <button class="btn btn-secondary" id="infoPanelBlockBtn" style="width: 100%; margin-bottom: 8px;">Toggle Block User</button>
+                </div>
+            `;
+
+            $('infoPanelBlockBtn').onclick = async () => {
+                try {
+                    await api(`/api/contacts/block/${target.id}`, { method: 'POST' });
+                    toast('User blocked.', 'success');
+                } catch (e) {
+                    try {
+                        await api(`/api/contacts/block/${target.id}`, { method: 'DELETE' });
+                        toast('User unblocked.', 'success');
+                    } catch (err) {
+                        toast(err.message, 'error');
+                    }
+                }
+            };
+
+        } else {
+            const g = await api(`/api/groups/${target.id}`);
+            const isMeAdmin = g.members.some(m => m.userId === state.me.userId && m.isAdmin);
+            
+            body.innerHTML = `
+                <div class="info-panel-section">
+                    <div class="info-panel-avatar">#</div>
+                    <div class="info-panel-name">${escapeHtml(g.name)}</div>
+                    <div class="info-panel-status">${g.memberCount} members</div>
+                </div>
+                <div class="info-panel-section" style="align-items: flex-start; text-align: left;">
+                    <div class="info-panel-label">Members</div>
+                    <div style="width:100%; background-color: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; padding: 10px; box-sizing: border-box; max-height: 250px; overflow-y: auto;">
+                        ${g.members.map(m => `
+                            <div style="display:flex; justify-content:space-between; align-items:center; padding: 6px 0; border-bottom: 1px solid rgba(0,0,0,0.05);">
+                                <span style="font-size:13px; color:var(--text-main); font-weight:500;">${escapeHtml(m.displayName)}${m.isAdmin ? ' <span class="badge badge-admin" style="margin-left:4px;">Admin</span>' : ''}</span>
+                                <span style="font-size:11px; color:var(--text-sub);">${m.presenceStatus || 'Offline'}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+                <div class="info-panel-section" style="border-bottom:none; gap: 8px; width: 100%;">
+                    ${isMeAdmin ? `<button class="btn" id="infoPanelManageBtn" style="width: 100%; background-color: var(--msgchat-dark); color: white;">Manage Members</button>` : ''}
+                    <button class="btn btn-danger" id="infoPanelLeaveBtn" style="width: 100%;">Leave Group</button>
+                </div>
+            `;
+
+            if (isMeAdmin) {
+                $('infoPanelManageBtn').onclick = () => {
+                    closeInfoPanel();
+                    showGroupInfoModal(target.id);
+                };
+            }
+            
+            $('infoPanelLeaveBtn').onclick = async () => {
+                try {
+                    await api(`/api/groups/${target.id}/members/${state.me.userId}`, { method: 'DELETE' });
+                    toast('Left group.', 'success');
+                    closeInfoPanel();
+                    await loadGroups();
+                    state.activeChat = null;
+                    $('chatPane').innerHTML = '<div class="empty-state">Select a contact or group to start chatting.</div>';
+                    renderSidebar();
+                } catch (e) { toast(e.message, 'error'); }
+            };
+        }
+    } catch (e) {
+        body.innerHTML = `<div style="padding:40px;text-align:center;color:red;">Error: ${escapeHtml(e.message)}</div>`;
+    }
+}
+
+function closeInfoPanel() {
+    const overlay = $('infoPanelOverlay');
+    const panel = $('infoPanel');
+    if (overlay) overlay.classList.remove('active');
+    if (panel) panel.classList.remove('active');
+}
+window.closeInfoPanel = closeInfoPanel;
+
+// ── In-Chat Message Search ──
+let searchMatches = [];
+let currentSearchIndex = -1;
+
+function toggleSearchOverlay() {
+    const overlay = $('chatSearchOverlay');
+    if (!overlay) return;
+    const isActive = overlay.classList.toggle('active');
+    if (isActive) {
+        $('chatSearchInput').value = '';
+        $('chatSearchCount').textContent = '';
+        $('chatSearchInput').focus();
+        searchMatches = [];
+        currentSearchIndex = -1;
+    } else {
+        clearSearchHighlighting();
+    }
+}
+window.toggleSearchOverlay = toggleSearchOverlay;
+
+function clearSearchHighlighting() {
+    const msgTexts = document.querySelectorAll('.msg-text');
+    msgTexts.forEach(el => {
+        if (el.dataset.originalContent) {
+            el.innerHTML = el.dataset.originalContent;
+        }
+    });
+    searchMatches = [];
+    currentSearchIndex = -1;
+    if ($('chatSearchCount')) $('chatSearchCount').textContent = '';
+}
+
+function runMessageSearch() {
+    const query = $('chatSearchInput').value.trim().toLowerCase();
+    clearSearchHighlighting();
+    if (!query) return;
+
+    const msgBubbles = document.querySelectorAll('.msg-bubble');
+    searchMatches = [];
+
+    msgBubbles.forEach(bubble => {
+        const textEl = bubble.querySelector('.msg-text');
+        if (!textEl) return;
+
+        if (!textEl.dataset.originalContent) {
+            textEl.dataset.originalContent = textEl.innerHTML;
+        }
+
+        const originalText = textEl.textContent || '';
+        if (originalText.toLowerCase().includes(query)) {
+            const regex = new RegExp(`(${escapeRegExp(query)})`, 'gi');
+            textEl.innerHTML = textEl.dataset.originalContent.replace(regex, '<mark class="search-match">$1</mark>');
+            
+            const markEls = textEl.querySelectorAll('mark.search-match');
+            markEls.forEach(mark => {
+                searchMatches.push(mark);
+            });
+        }
+    });
+
+    if (searchMatches.length > 0) {
+        currentSearchIndex = searchMatches.length - 1;
+        highlightCurrentSearchMatch();
+    } else {
+        $('chatSearchCount').textContent = '0 of 0';
+    }
+}
+
+function highlightCurrentSearchMatch() {
+    searchMatches.forEach((mark, index) => {
+        if (index === currentSearchIndex) {
+            mark.classList.add('selected');
+            mark.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } else {
+            mark.classList.remove('selected');
+        }
+    });
+    $('chatSearchCount').textContent = `${currentSearchIndex + 1} of ${searchMatches.length}`;
+}
+
+function searchNavigate(direction) {
+    if (searchMatches.length === 0) return;
+    if (direction === 'next') {
+        currentSearchIndex = (currentSearchIndex + 1) % searchMatches.length;
+    } else {
+        currentSearchIndex = (currentSearchIndex - 1 + searchMatches.length) % searchMatches.length;
+    }
+    highlightCurrentSearchMatch();
+}
+
+function escapeRegExp(string) {
+    return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// ── Emoji Picker Popup ──
+const POPULAR_EMOJIS = [
+    '😀', '😃', '😄', '😁', '😆', '😅', '😂', '🤣', '😊', '😇',
+    '🙂', '🙃', '😉', '😌', '😍', '🥰', '😘', '😗', '😙', '😚',
+    '😋', '😛', '😝', '😜', '🤪', '🤨', '🧐', '🤓', '😎', '🥸',
+    '🤩', '🥳', '😏', '😒', '😞', '😔', '😟', '😕', '🙁', '☹️',
+    '😣', '😖', '😫', '😩', '🥺', '😢', '😭', '😤', '😠', '😡',
+    '🤬', '🤯', '😳', '🥵', '🥶', '😱', '😨', '😰', '😥', '😓',
+    '🤗', '🤔', '🫣', '🤭', '🤫', '🤥', '😶', '😶‍🌫️', '😐', '😑',
+    '😬', '🫨', '🫠', '🙄', '😯', '😦', '😧', '😮', '😲', '🥱',
+    '😴', '🤤', '😪', '😵', '😵‍💫', '🤐', '🥴', '🤢', '🤮', '🤧',
+    '😷', '🤒', '🤕', '🤑', '🤠', '😈', '👿', '👹', '👺', '🤡',
+    '💩', '👻', '💀', '☠️', '👽', '👾', '🤖', '🎃', '😺', '😸',
+    '👍', '👎', '👌', '✌️', '🤞', '🤟', '🤘', '🤙', '👈', '👉',
+    '👆', '🖕', '👇', '☝️', '👍', '👊', '✊', '🤛', '🤜', '👏',
+    '🙌', '👐', '🤲', '🤝', '🙏', '✍️', '💅', '🤳', '💪', '🦾'
+];
+
+function initEmojiPicker() {
+    const picker = $('emojiPickerPopup');
+    if (!picker) return;
+    picker.innerHTML = POPULAR_EMOJIS.map(emoji => `
+        <span class="emoji-item" onclick="insertEmoji('${emoji}')">${emoji}</span>
+    `).join('');
+}
+
+function insertEmoji(emoji) {
+    const input = $('msgInput');
+    if (!input) return;
+    const start = input.selectionStart || 0;
+    const end = input.selectionEnd || 0;
+    const text = input.value;
+    input.value = text.substring(0, start) + emoji + text.substring(end);
+    input.selectionStart = input.selectionEnd = start + emoji.length;
+    input.focus();
+    handleInputTyping();
+}
+window.insertEmoji = insertEmoji;
+
+function toggleEmojiPicker(e) {
+    if (e) e.stopPropagation();
+    const picker = $('emojiPickerPopup');
+    if (picker) picker.classList.toggle('active');
+}
+window.toggleEmojiPicker = toggleEmojiPicker;
+
+// ── Typing Indicator ──
+const typingUsers = new Set();
+let localIsTyping = false;
+let stopTypingTimeout = null;
+
+function showTypingStatus(typingUserId, isTyping) {
+    const statusEl = $('chatHeaderStatus');
+    if (!statusEl) return;
+
+    if (isTyping) {
+        typingUsers.add(typingUserId);
+    } else {
+        typingUsers.delete(typingUserId);
+    }
+
+    if (typingUsers.size > 0) {
+        if (state.activeChat.type === 'private') {
+            statusEl.innerHTML = '<span class="typing-indicator-chat">typing...</span>';
+        } else {
+            const userIds = Array.from(typingUsers);
+            const names = userIds.map(uid => {
+                const contact = state.contacts.find(c => c.userId === uid);
+                return contact ? contact.displayName : 'Someone';
+            });
+            statusEl.innerHTML = `<span class="typing-indicator-chat">${names.join(', ')} is typing...</span>`;
+        }
+    } else {
+        if (state.activeChat.type === 'private') {
+            statusEl.textContent = state.presenceMap[state.activeChat.id] || 'Offline';
+        } else {
+            api(`/api/groups/${state.activeChat.id}`).then(g => {
+                statusEl.textContent = `${g.members.length} members`;
+            }).catch(() => {
+                statusEl.textContent = 'Group';
+            });
+        }
+    }
+}
+
+function handleInputTyping() {
+    if (!state.connection || !state.activeChat) return;
+
+    if (!localIsTyping) {
+        localIsTyping = true;
+        state.connection.invoke('SendTyping', state.activeChat.type, state.activeChat.id.toString(), true)
+            .catch(err => console.error("SendTyping error:", err));
+    }
+
+    clearTimeout(stopTypingTimeout);
+    stopTypingTimeout = setTimeout(() => {
+        localIsTyping = false;
+        state.connection.invoke('SendTyping', state.activeChat.type, state.activeChat.id.toString(), false)
+            .catch(err => console.error("SendTyping error:", err));
+    }, 3000);
+}
+
+// ── History Clearing & Chat Deletion ──
+async function clearChatHistory(target) {
+    if (!confirm('Are you sure you want to clear all message history in this chat? This cannot be undone.')) return;
+    try {
+        if (target.type === 'private') {
+            await state.connection.invoke('ClearPrivateHistory', target.id);
+        } else {
+            await state.connection.invoke('ClearGroupHistory', parseInt(target.id));
+        }
+        state.messages = [];
+        renderMessages();
+        toast('Chat history cleared successfully.', 'success');
+    } catch (e) {
+        toast(e.message, 'error');
+    }
+}
+
+async function deleteChat(target) {
+    if (target.type === 'private') {
+        if (!confirm('Are you sure you want to delete this chat? This will remove the contact and clear the message history.')) return;
+        try {
+            await state.connection.invoke('ClearPrivateHistory', target.id);
+            await api(`/api/contacts/${target.id}`, { method: 'DELETE' });
+            toast('Chat deleted and contact removed.', 'success');
+            state.activeChat = null;
+            $('chatPane').innerHTML = '<div class="empty-state">Select a contact or group to start chatting.</div>';
+            await loadContacts();
+            renderSidebar();
+        } catch (e) {
+            toast(e.message, 'error');
+        }
+    } else {
+        if (!confirm('Are you sure you want to leave this group?')) return;
+        try {
+            await api(`/api/groups/${target.id}/members/${state.me.userId}`, { method: 'DELETE' });
+            toast('Left group successfully.', 'success');
+            state.activeChat = null;
+            $('chatPane').innerHTML = '<div class="empty-state">Select a contact or group to start chatting.</div>';
+            await loadGroups();
+            renderSidebar();
+        } catch (e) {
+            toast(e.message, 'error');
+        }
+    }
+}

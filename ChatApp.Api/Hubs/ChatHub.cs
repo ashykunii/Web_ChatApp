@@ -189,6 +189,45 @@ public class ChatHub : Hub
         await Groups.RemoveFromGroupAsync(Context.ConnectionId, GroupName(groupId));
     }
 
+    public async Task ClearPrivateHistory(string otherUserId)
+    {
+        await EnsureNotBannedAsync();
+        await _messages.ClearPrivateHistoryAsync(UserId, otherUserId);
+        await Clients.User(UserId).SendAsync("HistoryCleared", "private", otherUserId);
+        await Clients.User(otherUserId).SendAsync("HistoryCleared", "private", UserId);
+    }
+
+    public async Task ClearGroupHistory(int groupId)
+    {
+        await EnsureNotBannedAsync();
+        var member = await _messages.GetUserGroupIdsAsync(UserId);
+        if (!member.Contains(groupId))
+            throw new HubException("You are not a member of this group.");
+
+        await _messages.ClearGroupHistoryAsync(groupId);
+        await Clients.Group(GroupName(groupId)).SendAsync("HistoryCleared", "group", groupId.ToString());
+    }
+
+    public async Task SendTyping(string targetType, string targetId, bool isTyping)
+    {
+        await EnsureNotBannedAsync();
+        if (targetType == "private")
+        {
+            await Clients.User(targetId).SendAsync("UserTyping", UserId, "private", UserId, isTyping);
+        }
+        else if (targetType == "group")
+        {
+            if (int.TryParse(targetId, out var groupId))
+            {
+                var member = await _messages.GetUserGroupIdsAsync(UserId);
+                if (member.Contains(groupId))
+                {
+                    await Clients.Group(GroupName(groupId)).SendAsync("UserTyping", UserId, "group", targetId, isTyping);
+                }
+            }
+        }
+    }
+
     // ── Static helper: called from AdminController to force-disconnect ─────────
 
     public static IReadOnlyList<string> GetConnectionIds(string userId)

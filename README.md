@@ -146,17 +146,41 @@ Here is a detailed breakdown of the core technologies utilized in this applicati
 
 ## Extra commands for terminal (Windows PowerShell)
 These are some extra commands that can be used in the terminal (Windows PowerShell):
-```bash
-# Purge and clean solution assemblies
-dotnet clean
-# Terminate running background engine operations forcefully
+```powershell
+# Terminate any running dotnet/web host processes first
 Stop-Process -Name dotnet -Force -ErrorAction SilentlyContinue      
-# Terminate localized web host processes cleanly
 Stop-Process -Name Web_ChatApp* -Force -ErrorAction SilentlyContinue
-# Trigger solution build compilation verify pass
+
+# Deep clean: Purge bin and obj folders recursively to clear the build cache
+Get-ChildItem -Path . -Include bin,obj -Recurse | Remove-Item -Recurse -Force
+
+# Standard clean and build
+dotnet clean
 dotnet build
 
+# Run the project without launching the browser/using hot reload caches
+dotnet run --project ChatApp.Api --no-launch-profile
 ```
+
+### Resolving Browser Caching (If you see the old version of the interface)
+Browsers aggressively cache CSS (`style.css`) and JavaScript (`app.js`). If you do not see the new UI changes (such as the Info panel, Search overlay, or Emoji button), perform the following actions:
+
+1. **Force a Hard Refresh**:
+   * **Windows/Linux**: Press `Ctrl` + `F5` or `Ctrl` + `Shift` + `R` (Chrome/Edge/Firefox).
+   * **macOS**: Press `Cmd` + `Shift` + `R` (Chrome/Firefox) or hold `Shift` and click the refresh button (Safari).
+2. **Disable Cache via DevTools**:
+   * Open Developer Tools by pressing `F12` or `Ctrl` + `Shift` + `I`.
+   * Go to the **Network** tab.
+   * Check the **Disable cache** checkbox (this only works while Developer Tools is open).
+   * Refresh the page (`F5`).
+3. **Increment the Query String Version**:
+   * If the changes are still not loaded, verify that the version parameter in `index.html` matches the updated scripts:
+     ```html
+     <link rel="stylesheet" href="style.css?v=9" />
+     <script src="app.js?v=9"></script>
+     ```
+     Incrementing this query string (e.g., changing `v=9` to `v=10`) forces the browser to pull the new files.
+
 
 ## Usage
 
