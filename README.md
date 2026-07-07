@@ -7,6 +7,7 @@ Welcome to **`Web_ChatApp`**, a real-time, responsive, single-page chat applicat
 - [About the Project](#about-the-project)
 - [Architectural Overview](#architectural-overview)
 - [Key Features](#key-features)
+- [Improvement and Future Features](#improvement-and-future-features)
 - [Tech Stacks](#tech-stacks)
 - [Installation](#installation)
 - [Usage](#usage)
@@ -79,6 +80,17 @@ This project used these technologies:
 * **Double-Accent Theme Engine**: Fluent night/dark and light styling modes prioritizing soothing forest green and modern navy palettes.
 * **Administrative Suite**: Special sidebar panel to manage users, ban violators, and enforce terms of service globally in real-time.
 * **Security & Audits**: JWT bearer token authorization, password hashing, and custom middleware checking account ban statuses on every API call.
+
+## Improvements and Future Features
+
+* **Improve chat message bubble styling** 
+* **File/image sharing system**
+* **Voice/video call system**
+* **Message forwarding**
+* **Message translation**
+* **Message summarization**
+* **Message scheduling, etc...**
+
 
 ## Tech Stacks
 
@@ -312,4 +324,4 @@ Based on the `app.js` and controller files, the following API endpoints are like
 >Read our deep-dive architectural decisions in the [Tech Stack Documentation](./TECH-STACK.md).
 
 <br><br>
-<center>©2026 SOK Sorya, All Rights Reserved.</center>
+<center>©2026 SOK Sorya, All Rights Reserved.</center<>
