@@ -110,6 +110,70 @@ function renderAvatarEl(el, displayName, avatarUrl) {
     }
 }
 
+const attachmentSizes = {};
+function loadAttachmentSize(url, elementId) {
+    if (attachmentSizes[url]) {
+        const el = $(elementId);
+        if (el) el.textContent = attachmentSizes[url];
+        return;
+    }
+    fetch(url, { method: 'HEAD' })
+        .then(res => {
+            const bytes = res.headers.get('content-length');
+            if (bytes) {
+                const kb = parseInt(bytes) / 1024;
+                const formatted = kb > 1024 
+                    ? `${(kb / 1024).toFixed(1)} MB` 
+                    : `${kb.toFixed(1)} KB`;
+                attachmentSizes[url] = formatted;
+                const el = $(elementId);
+                if (el) el.textContent = formatted;
+            } else {
+                const el = $(elementId);
+                if (el) el.textContent = 'Unknown size';
+            }
+        })
+        .catch(() => {
+            const el = $(elementId);
+            if (el) el.textContent = 'Click to open';
+        });
+}
+
+function getFileIconSvg(fileName) {
+    const ext = fileName.split('.').pop().toLowerCase();
+    let color = '#3a8c55'; // default green
+    let text = 'FILE';
+    if (ext === 'pdf') {
+        color = '#e74c3c'; // red
+        text = 'PDF';
+    } else if (['doc', 'docx'].includes(ext)) {
+        color = '#3498db'; // blue
+        text = 'DOC';
+    } else if (['xls', 'xlsx'].includes(ext)) {
+        color = '#2ecc71'; // green
+        text = 'XLS';
+    } else if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) {
+        color = '#f1c40f'; // yellow
+        text = 'ZIP';
+    } else if (['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp'].includes(ext)) {
+        color = '#9b59b6'; // purple
+        text = 'IMG';
+    } else if (['mp3', 'wav', 'ogg', 'm4a'].includes(ext)) {
+        color = '#e67e22'; // orange
+        text = 'AUD';
+    } else if (['mp4', 'mkv', 'avi', 'mov'].includes(ext)) {
+        color = '#1abc9c'; // teal
+        text = 'VID';
+    }
+    
+    return `
+        <svg viewBox="0 0 24 24" width="32" height="32" style="fill: ${color}; display: block; margin: 0 auto;">
+            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+        </svg>
+        <span style="font-size: 8px; font-weight: bold; color: ${color}; margin-top: 1px; display: block; text-align: center; text-transform: uppercase;">${text}</span>
+    `;
+}
+
 /* ==========================================================================
    3. DRAWER & SIDEBAR EVENT LISTENERS
    ========================================================================== */
@@ -193,6 +257,10 @@ $('tabLogin').onclick = () => {
     $('tabRegister').classList.remove('active');
     $('loginForm').style.display = '';
     $('registerForm').style.display = 'none';
+    const h = document.querySelector('.auth-card-header h1');
+    const p = document.querySelector('.auth-card-header p');
+    if (h) h.textContent = 'Welcome back';
+    if (p) p.textContent = 'Sign in to continue to ChatApp';
 };
 
 $('tabRegister').onclick = () => {
@@ -200,6 +268,10 @@ $('tabRegister').onclick = () => {
     $('tabLogin').classList.remove('active');
     $('registerForm').style.display = '';
     $('loginForm').style.display = 'none';
+    const h = document.querySelector('.auth-card-header h1');
+    const p = document.querySelector('.auth-card-header p');
+    if (h) h.textContent = 'Create an account';
+    if (p) p.textContent = 'Join ChatApp — it\'s free';
 };
 
 // Login Form Submit Event
@@ -306,15 +378,11 @@ async function connectHub() {
             const existingIndex = state.messages.findIndex(m => m.id === msg.id);
             if (existingIndex !== -1) {
                 if (msg.isDeleted) {
-                    state.messages[existingIndex].content = '[deleted]';
-                    state.messages[existingIndex].attachmentType = '';
-                    state.messages[existingIndex].attachmentUrl = '';
-                    state.messages[existingIndex].attachmentFileName = '';
-                    state.messages[existingIndex].isDeleted = true;
+                    state.messages.splice(existingIndex, 1);
                 } else {
                     state.messages[existingIndex].content = msg.content;
                 }
-            } else {
+            } else if (!msg.isDeleted) {
                 state.messages.push(msg);
                 // If this is an incoming private message, mark it as seen immediately
                 if (msg.senderId !== state.me.userId && msg.recipientId === state.me.userId) {
@@ -346,8 +414,7 @@ async function connectHub() {
     state.connection.on('MessageDeleted', (messageId) => {
         const idx = state.messages.findIndex(m => m.id === messageId);
         if (idx !== -1) {
-            state.messages[idx].content = '[deleted]';
-            state.messages[idx].isDeleted = true;
+            state.messages.splice(idx, 1);
             renderMessages();
         }
     });
@@ -878,25 +945,25 @@ function renderMessages(scrollToBottom = true) {
         // File attachments layout
         let attachmentHtml = '';
         if (m.attachmentUrl) {
-            if (m.attachmentType === 'image') {
-                attachmentHtml = `
-                    <div class="attachment-container">
-                        <img src="${m.attachmentUrl}" class="image-attachment" alt="Attached photo" onclick="window.open('${m.attachmentUrl}', '_blank')" />
+            const fileName = m.attachmentFileName || m.attachmentUrl.split('/').pop();
+            const sizeId = `size-${m.id}`;
+            const thumbHtml = m.attachmentType === 'image'
+                ? `<div class="attachment-thumb-img" style="background-image: url('${m.attachmentUrl}');"></div>`
+                : `<div class="attachment-thumb-icon">${getFileIconSvg(fileName)}</div>`;
+
+            attachmentHtml = `
+                <div class="attachment-card">
+                    <div class="attachment-thumb" onclick="window.open('${m.attachmentUrl}', '_blank')">
+                        ${thumbHtml}
                     </div>
-                `;
-            } else {
-                attachmentHtml = `
-                    <div class="attachment-container">
-                        <a href="${m.attachmentUrl}" class="file-attachment" download="${escapeHtml(m.attachmentFileName)}">
-                            <span class="file-icon"></span>
-                            <div class="file-info">
-                                <div class="file-name">${escapeHtml(m.attachmentFileName)}</div>
-                                <div class="file-size">Download file</div>
-                            </div>
-                        </a>
+                    <div class="attachment-info">
+                        <div class="attachment-filename" title="${escapeHtml(fileName)}">${escapeHtml(fileName)}</div>
+                        <div class="attachment-size" id="${sizeId}">Loading size...</div>
+                        <a class="attachment-action-link" href="${m.attachmentUrl}" target="_blank" download="${escapeHtml(fileName)}">Open with</a>
                     </div>
-                `;
-            }
+                </div>
+            `;
+            setTimeout(() => loadAttachmentSize(m.attachmentUrl, sizeId), 50);
         }
 
         // Display sender profile photo for group incoming rows
@@ -917,8 +984,11 @@ function renderMessages(scrollToBottom = true) {
         // Parse reply notation prefix >>reply:id:sender:snippet<<ActualText
         let textContent = m.content;
         let replyRefHtml = '';
+        let fwdBannerHtml = '';
         const replyRegex = /^>>reply:(\d+):([^:]+):([^<]*)<<([\s\S]*)$/;
+        const fwdRegex = /^>>fwd:([^<]*)<<([\s\S]*)$/;
         const match = textContent.match(replyRegex);
+        const fwdMatch = !match && textContent.match(fwdRegex);
         if (match) {
             const parentId = match[1];
             const parentSender = match[2];
@@ -929,6 +999,15 @@ function renderMessages(scrollToBottom = true) {
                 <div class="bubble-reply-ref" onclick="scrollToMessage(${parentId})">
                     <div class="reply-sender">${escapeHtml(parentSender)}</div>
                     <div>${escapeHtml(parentSnippet)}</div>
+                </div>
+            `;
+        } else if (fwdMatch) {
+            const originalSender = fwdMatch[1];
+            textContent = fwdMatch[2];
+            fwdBannerHtml = `
+                <div class="bubble-fwd-banner">
+                    <svg viewBox="0 0 24 24" width="13" height="13"><path fill="currentColor" d="M12 8V4l8 8-8 8v-4H4V8z"/></svg>
+                    Forwarded from ${escapeHtml(originalSender)}
                 </div>
             `;
         }
@@ -943,7 +1022,7 @@ function renderMessages(scrollToBottom = true) {
         const senderLabel = isMine ? 'You' : (m.senderDisplayName || 'Unknown');
         bubble.innerHTML = `
             <div class="bubble-sender">${escapeHtml(senderLabel)}</div>
-            ${replyRefHtml}
+            ${fwdBannerHtml}${replyRefHtml}
             <div class="bubble-text">
                 ${textContent ? `<div>${escapeHtml(textContent)}</div>` : ''}
                 ${attachmentHtml}
@@ -984,9 +1063,13 @@ function showContextMenu(e, m) {
     // Bind action events
     $('msgCtxReply').onclick = () => { initiateReply(m); menu.classList.remove('active'); };
 
+    $('msgCtxForward').onclick = () => { openForwardModal(m); menu.classList.remove('active'); };
+
     $('msgCtxCopy').onclick = () => {
         let textToCopy = m.content;
         if (textToCopy.startsWith('>>reply:')) {
+            textToCopy = textToCopy.split('<<').slice(1).join('<<');
+        } else if (textToCopy.startsWith('>>fwd:')) {
             textToCopy = textToCopy.split('<<').slice(1).join('<<');
         }
         navigator.clipboard.writeText(textToCopy);
@@ -1032,6 +1115,118 @@ function showContextMenu(e, m) {
     menu.style.top = `${top}px`;
     menu.style.left = `${left}px`;
 }
+
+/* ==========================================================================
+   FORWARD MESSAGE FEATURE
+   ========================================================================== */
+
+let _forwardMsg = null;
+let _forwardSelected = null; // { type: 'private'|'group', id, name }
+
+function openForwardModal(msg) {
+    _forwardMsg = msg;
+    _forwardSelected = null;
+    const backdrop = $('forwardModalBackdrop');
+    const list = $('forwardList');
+    const sendBtn = $('forwardSendBtn');
+    const label = $('forwardSelectedLabel');
+
+    sendBtn.disabled = true;
+    label.textContent = '';
+    $('forwardSearch').value = '';
+
+    renderForwardList('');
+    backdrop.classList.add('active');
+    $('forwardSearch').focus();
+}
+
+function closeForwardModal() {
+    $('forwardModalBackdrop').classList.remove('active');
+    _forwardMsg = null;
+    _forwardSelected = null;
+}
+window.closeForwardModal = closeForwardModal;
+
+function renderForwardList(query) {
+    const list = $('forwardList');
+    list.innerHTML = '';
+    const q = (query || '').toLowerCase();
+
+    const allItems = [
+        ...state.contacts.map(c => ({ type: 'private', id: c.userId, name: c.displayName, avatarUrl: c.avatarUrl, sub: 'Contact' })),
+        ...state.groups.map(g  => ({ type: 'group',   id: g.id,     name: g.name,        avatarUrl: null,        sub: `${g.memberCount || ''} members` }))
+    ].filter(i => !q || i.name.toLowerCase().includes(q));
+
+    if (!allItems.length) {
+        list.innerHTML = '<div style="padding:20px;text-align:center;color:var(--text-sub);font-size:13px;">No contacts or groups found.</div>';
+        return;
+    }
+
+    allItems.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'forward-list-item' + (_forwardSelected?.id === item.id ? ' selected' : '');
+
+        const avatarDiv = document.createElement('div');
+        avatarDiv.className = 'avatar';
+        renderAvatarEl(avatarDiv, item.name, item.avatarUrl);
+
+        const check = document.createElement('div');
+        check.className = 'forward-item-check';
+
+        div.innerHTML = '';
+        div.appendChild(avatarDiv);
+        div.insertAdjacentHTML('beforeend', `
+            <div class="forward-item-info">
+                <div class="forward-item-name">${escapeHtml(item.name)}</div>
+                <div class="forward-item-type">${escapeHtml(item.sub)}</div>
+            </div>
+        `);
+        div.appendChild(check);
+
+        div.onclick = () => {
+            _forwardSelected = item;
+            $('forwardSendBtn').disabled = false;
+            $('forwardSelectedLabel').textContent = `To: ${item.name}`;
+            renderForwardList($('forwardSearch').value);
+        };
+
+        list.appendChild(div);
+    });
+}
+
+async function sendForwardedMessage() {
+    if (!_forwardMsg || !_forwardSelected) return;
+
+    const originalSender = _forwardMsg.senderDisplayName || 'Unknown';
+    // Strip any existing fwd/reply prefix to get raw content
+    let rawContent = _forwardMsg.content;
+    const replyMatch = rawContent.match(/^>>reply:\d+:[^:]+:[^<]*<<([\s\S]*)$/);
+    const fwdMatch   = rawContent.match(/^>>fwd:[^<]*<<([\s\S]*)$/);
+    if (replyMatch) rawContent = replyMatch[1];
+    else if (fwdMatch) rawContent = fwdMatch[1];
+
+    const fwdContent = `>>fwd:${originalSender}<<${rawContent}`;
+    const { type, id } = _forwardSelected;
+
+    try {
+        if (type === 'private') {
+            await state.connection.invoke('SendPrivateMessage', id, fwdContent,
+                _forwardMsg.attachmentUrl || null,
+                _forwardMsg.attachmentFileName || null,
+                _forwardMsg.attachmentType || null);
+        } else {
+            await state.connection.invoke('SendGroupMessage', id, fwdContent,
+                _forwardMsg.attachmentUrl || null,
+                _forwardMsg.attachmentFileName || null,
+                _forwardMsg.attachmentType || null);
+        }
+        toast(`Message forwarded to ${_forwardSelected.name}.`, 'success');
+        closeForwardModal();
+    } catch (e) {
+        toast(e.message || 'Failed to forward message.', 'error');
+    }
+}
+window.sendForwardedMessage = sendForwardedMessage;
 
 // Smooth scroll search highlighting animation
 function scrollToMessage(id) {
@@ -1804,7 +1999,14 @@ function showAdminUserModal(user) {
                 await api(`/api/admin/unban/${user.userId}`, { method: 'POST' });
                 toast('User account reinstated.', 'success');
                 closeModal();
-                renderAdminPanel();
+                if (state.activeChat && state.activeChat.type === 'private' && state.activeChat.id === user.userId) {
+                    openInfoPanel(state.activeChat);
+                }
+                if (state.activeTab === 'admin') {
+                    renderAdminPanel();
+                } else {
+                    api('/api/admin/users').then(users => state.adminUsers = users).catch(()=>{});
+                }
             } catch (e) { toast(e.message, 'error'); }
         };
     } else {
@@ -1821,7 +2023,14 @@ function showAdminUserModal(user) {
                 });
                 toast('User account suspended and disconnected.', 'success');
                 closeModal();
-                renderAdminPanel();
+                if (state.activeChat && state.activeChat.type === 'private' && state.activeChat.id === user.userId) {
+                    openInfoPanel(state.activeChat);
+                }
+                if (state.activeTab === 'admin') {
+                    renderAdminPanel();
+                } else {
+                    api('/api/admin/users').then(users => state.adminUsers = users).catch(()=>{});
+                }
             } catch (e) { toast(e.message, 'error'); }
         };
     }
@@ -1839,6 +2048,14 @@ window.closeModal = closeModal;
 $('modalBackdrop').onclick = (e) => {
     if (e.target.id === 'modalBackdrop') closeModal();
 };
+
+// Forward Modal event wiring
+$('forwardModalClose').onclick = closeForwardModal;
+$('forwardModalBackdrop').onclick = (e) => {
+    if (e.target.id === 'forwardModalBackdrop') closeForwardModal();
+};
+$('forwardSearch').oninput = (e) => renderForwardList(e.target.value);
+$('forwardSendBtn').onclick = sendForwardedMessage;
 
 // Auto-Login and Application Initialize
 (async function init() {
@@ -1873,6 +2090,22 @@ async function openInfoPanel(target) {
 
     try {
         if (target.type === 'private') {
+            let adminUser = null;
+            if (state.me && state.me.role === 'Admin') {
+                try {
+                    if (!state.adminUsers || state.adminUsers.length === 0) {
+                        state.adminUsers = await api('/api/admin/users');
+                    }
+                    adminUser = state.adminUsers.find(u => u.userId === target.id);
+                    if (!adminUser) {
+                        state.adminUsers = await api('/api/admin/users');
+                        adminUser = state.adminUsers.find(u => u.userId === target.id);
+                    }
+                } catch (e) {
+                    console.error("Failed to fetch admin users status", e);
+                }
+            }
+
             const contact = state.contacts.find(c => c.userId === target.id) || {};
             const status = state.presenceMap[target.id] || 'Offline';
             const statusColor = status === 'Online' ? '#4cd48a' : status === 'Away' ? '#f1c40f' : '#95a5a6';
@@ -1889,17 +2122,46 @@ async function openInfoPanel(target) {
 
             body.innerHTML = `
                 <!-- Avatar / Identity -->
+
                 <div class="info-panel-section">
-                    <div class="info-panel-avatar" style="${avatarBg}">${contact.avatarUrl ? '' : initials(target.name)}</div>
+                    <div class="info-panel-avatar" style="${avatarBg}">
+                        ${contact.avatarUrl ? '' : initials(target.name)}
+                    </div>
+
                     <div class="info-panel-name">${escapeHtml(target.name)}</div>
+
                     <div class="info-panel-status" style="color:${statusColor}">
-                        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${statusColor};margin-right:5px;"></span>${status}
+                        <span style="
+                            display:inline-block;
+                            width:8px;
+                            height:8px;
+                            border-radius:50%;
+                            background:${statusColor};
+                            margin-right:5px;
+                        "></span>
+                        ${status}
                     </div>
-                    <div class="info-actions">
-                        <button class="info-action-btn" onclick="closeInfoPanel()" title="Go to chat">Message</button>
-                        <button class="info-action-btn" id="infoPanelBlockBtn" title="Block/Unblock">Block</button>
-                    </div>
-                </div>
+
+                    <div class="info-actions" style="display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 15px;">
+
+                        <button class="info-action-btn"
+                                onclick="closeInfoPanel()">
+                            Message
+                        </button>
+
+                        <button class="info-action-btn"
+                                id="infoPanelBlockBtn">
+                            Block
+                        </button>
+                        
+                        ${state.me && state.me.role === 'Admin' && target.id !== state.me.userId ? `
+                        <button class="info-action-btn"
+                                id="infoPanelBanBtn" style="background-color: #ec5b5b; color: white;">
+                            ${adminUser && adminUser.isBanned ? 'Unban' : 'Ban'}
+                        </button>
+                        ` : ''}
+                    </div> 
+                 </div>
 
                 <!-- Contact Details -->
                 <div class="info-panel-section" style="align-items: flex-start; text-align: left;">
@@ -1940,6 +2202,24 @@ async function openInfoPanel(target) {
                     } catch (err) { toast(err.message, 'error'); }
                 }
             };
+
+            if ($('infoPanelBanBtn')) {
+                $('infoPanelBanBtn').onclick = () => {
+                    if (adminUser) {
+                        showAdminUserModal(adminUser);
+                    } else {
+                        const fallbackUser = {
+                            userId: target.id,
+                            userName: contact.userName || target.name,
+                            displayName: target.name,
+                            presenceStatus: status,
+                            isBanned: false,
+                            banReason: ''
+                        };
+                        showAdminUserModal(fallbackUser);
+                    }
+                };
+            }
 
         } else {
             const g = await api(`/api/groups/${target.id}`);

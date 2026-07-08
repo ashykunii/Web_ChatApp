@@ -5,7 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ChatApp</title>
-    <link rel="stylesheet" href="style.css?v=10" />
+    <link rel="stylesheet" href="style.css?v=11" />
     <script src="https://cdnjs.cloudflare.com/ajax/libs/microsoft-signalr/8.0.7/signalr.min.js"></script>
 </head>
 
@@ -13,52 +13,74 @@
 
     <!-- Auth Screen -->
     <div id="authScreen" class="auth-screen">
-        <div class="auth-card">
-            <h1>ChatApp</h1>
-            <div class="auth-subtitle">Clean, real-time messaging solution</div>
 
-            <div class="auth-tabs">
-                <button id="tabLogin" class="active">Login</button>
-                <button id="tabRegister">Register</button>
+        <!-- Left branding panel -->
+        <div class="auth-brand">
+            <div class="auth-brand-logo"><span></span></div>
+            <div class="auth-brand-title">Real-time,<br><span>on your wavelength.</span></div>
+            <div class="auth-brand-desc">Connect instantly with your team and friends. Every message travels at the
+                speed of signal — fast, secure, and always in sync.</div>
+            <div class="auth-brand-dots">
+                <span></span><span></span><span></span>
             </div>
-
-            <!-- Login Form -->
-            <form id="loginForm">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="loginUserName" required autocomplete="username" />
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="loginPassword" required autocomplete="current-password" />
-                </div>
-                <button type="submit" class="btn btn-block">Login</button>
-                <div id="loginError" class="error"></div>
-            </form>
-
-            <!-- Register Form -->
-            <form id="registerForm" style="display:none;">
-                <div class="form-group">
-                    <label>Username</label>
-                    <input type="text" id="regUserName" required autocomplete="username" />
-                </div>
-                <div class="form-group">
-                    <label>Display Name</label>
-                    <input type="text" id="regDisplayName" required />
-                </div>
-                <div class="form-group">
-                    <label>Email</label>
-                    <input type="email" id="regEmail" required autocomplete="email" />
-                </div>
-                <div class="form-group">
-                    <label>Password</label>
-                    <input type="password" id="regPassword" required minlength="6" autocomplete="new-password" />
-                </div>
-                <button type="submit" class="btn btn-block">Register</button>
-                <div id="regError" class="error"></div>
-                <div id="regSuccess" class="success"></div>
-            </form>
         </div>
+
+        <!-- Right form panel -->
+        <div class="auth-form-panel">
+            <div class="auth-card">
+                <div class="auth-card-header">
+                    <h1>Welcome back</h1>
+                    <p>Sign in to continue to ChatApp</p>
+                </div>
+
+                <div class="auth-tabs">
+                    <button id="tabLogin" class="active">Sign In</button>
+                    <button id="tabRegister">Create Account</button>
+                </div>
+
+                <!-- Login Form -->
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="loginUserName" required autocomplete="username"
+                            placeholder="Enter your username" />
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="loginPassword" required autocomplete="current-password"
+                            placeholder="Enter your password" />
+                    </div>
+                    <button type="submit" class="btn btn-block">Sign In</button>
+                    <div id="loginError" class="error"></div>
+                </form>
+
+                <!-- Register Form -->
+                <form id="registerForm" style="display:none;">
+                    <div class="form-group">
+                        <label>Username</label>
+                        <input type="text" id="regUserName" required autocomplete="username"
+                            placeholder="Choose a username" />
+                    </div>
+                    <div class="form-group">
+                        <label>Display Name</label>
+                        <input type="text" id="regDisplayName" required placeholder="Your full name" />
+                    </div>
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="regEmail" required autocomplete="email" placeholder="you@example.com" />
+                    </div>
+                    <div class="form-group">
+                        <label>Password</label>
+                        <input type="password" id="regPassword" required minlength="6" autocomplete="new-password"
+                            placeholder="Min. 6 characters" />
+                    </div>
+                    <button type="submit" class="btn btn-block">Create Account</button>
+                    <div id="regError" class="error"></div>
+                    <div id="regSuccess" class="success"></div>
+                </form>
+            </div>
+        </div>
+
     </div>
 
     <!-- Main App -->
@@ -132,18 +154,17 @@
                             <path fill-rule="evenodd"
                                 d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1" />
                         </svg></span>My Profile</a>
-                <a id="drawerMenuNewGroup" class="drawer-parent"><span class="menu-icon"><svg
-                            xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor"
-                            class="bi bi-people-fill" viewBox="0 0 16 16">
-                            <path
+                <a id="drawerMenuNewGroup"><span class="menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16"
+                            height="16" fill="currentColor" class="bi bi-people-fill" viewBox="0 0 16 16">
+                            <path fill-rule="evenodd"
                                 d="M7 14s-1 0-1-1 1-4 5-4 5 3 5 4-1 1-1 1zm4-6a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5.784 6A2.24 2.24 0 0 1 5 13c0-1.355.68-2.75 1.936-3.72A6.3 6.3 0 0 0 5 9c-4 0-5 3-5 4s1 1 1 1zM4.5 8a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5" />
                         </svg></span>New Group</a>
-                <a id="drawerMenuBulkMessage" class="drawer-child"><span class="menu-icon">Bulk Message</span></a>
-                <a id="drawerMenuContacts"><span class="menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16"
-                            height="16" fill="currentColor" class="bi bi-person-lines-fill" viewBox="0 0 18 18">
-                            <path
-                                d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zM11 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m.5 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1zm2 3a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1zm0 3a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1z" />
-                        </svg></span>Contacts</a>
+                <a id="drawerMenuContacts" class="drawer-parent"><svg xmlns="http://www.w3.org/2000/svg" width="16"
+                        height="16" fill="currentColor" class="bi bi-person-lines-fill" viewBox="0 0 18 18">
+                        <path fill-rule="evenodd"
+                            d="M6 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6m-5 6s-1 0-1-1 1-4 6-4 6 3 6 4-1 1-1 1zM11 3.5a.5.5 0 0 1 .5-.5h4a.5.5 0 0 1 0 1h-4a.5.5 0 0 1-.5-.5m.5 2.5a.5.5 0 0 0 0 1h4a.5.5 0 0 0 0-1zm2 3a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1zm0 3a.5.5 0 0 0 0 1h2a.5.5 0 0 0 0-1z" />
+                    </svg></span>Contacts</a>
+                <a id="drawerMenuBulkMessage" class="drawer-child">Bulk Message</span></a>
                 <a id="drawerMenuSettings"><span class="menu-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16"
                             height="16" fill="currentColor" class="bi bi-gear-fill" viewBox="0 0 18 18">
                             <path
@@ -160,10 +181,58 @@
         <!-- Message Context Menu -->
         <div class="msg-context-menu" id="msgContextMenu">
             <a id="msgCtxReply"><span class="menu-icon"></span> Reply</a>
+            <a id="msgCtxForward"><span class="menu-icon"></span> Forward</a>
             <a id="msgCtxEdit"><span class="menu-icon"></span> Edit Message</a>
             <a id="msgCtxCopy"><span class="menu-icon"></span> Copy Text</a>
             <a id="msgCtxPin"><span class="menu-icon"></span> Pin Message</a>
             <a id="msgCtxDelete" class="danger"><span class="menu-icon"></span> Delete Message</a>
+        </div>
+
+        <!-- Forward Message Modal -->
+        <div class="forward-modal-backdrop" id="forwardModalBackdrop">
+            <div class="forward-modal" id="forwardModal">
+
+                <!-- Header -->
+                <div class="forward-modal-header">
+                    <div class="forward-modal-title">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="currentColor" d="M12 8V4l8 8-8 8v-4H4V8z" />
+                        </svg>
+                        <span>Forward to...</span>
+                    </div>
+                    <button class="forward-modal-close" id="forwardModalClose" title="Close">
+                        <svg viewBox="0 0 24 24" width="18" height="18">
+                            <path fill="currentColor"
+                                d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
+                        </svg>
+                    </button>
+                </div>
+
+                <!-- Search -->
+                <div class="forward-search-wrap">
+                    <svg class="forward-search-icon" viewBox="0 0 24 24" width="15" height="15">
+                        <path fill="currentColor"
+                            d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z" />
+                    </svg>
+                    <input type="text" id="forwardSearch" class="forward-search"
+                        placeholder="Search contacts or groups..." />
+                </div>
+
+                <!-- List -->
+                <div class="forward-list" id="forwardList"></div>
+
+                <!-- Footer -->
+                <div class="forward-modal-footer">
+                    <span class="forward-selected-label" id="forwardSelectedLabel"></span>
+                    <button class="btn forward-send-btn" id="forwardSendBtn" disabled>
+                        <svg viewBox="0 0 24 24" width="16" height="16">
+                            <path fill="currentColor" d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z" />
+                        </svg>
+                        Send
+                    </button>
+                </div>
+
+            </div>
         </div>
 
         <!-- Emoji Picker Popup -->
@@ -177,7 +246,7 @@
         <!-- Toast Container -->
         <div class="toast-container" id="toastContainer"></div>
 
-        <script src="app.js?v=10"></script>
+        <script src="app.js?v=11"></script>
 </body>
 
 </html>

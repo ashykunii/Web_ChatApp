@@ -468,9 +468,6 @@ C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\rjsmrazor.dswa.cache.json
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\rjsmcshtml.dswa.cache.json
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\scopedcss\bundle\ChatApp.Api.styles.css
-C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\compressed\s1av8rnzna-{0}-55syfc47l3-55syfc47l3.gz
-C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\compressed\a8q2j5ownz-{0}-f8pzsi1cb2-f8pzsi1cb2.gz
-C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\compressed\w4eqiinshd-{0}-i3ity7806c-i3ity7806c.gz
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\staticwebassets.build.json
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\staticwebassets.build.json.cache
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\staticwebassets.development.json
@@ -482,3 +479,6 @@ C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\ChatApp.Api.pdb
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\ChatApp.Api.genruntimeconfig.cache
 C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\ref\ChatApp.Api.dll
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\compressed\s1av8rnzna-{0}-ioeo5fdria-ioeo5fdria.gz
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\compressed\a8q2j5ownz-{0}-2mhj2h3yfb-2mhj2h3yfb.gz
+C:\Users\Sorya Sok\OneDrive\Desktop\SOFTWARE DEVELOPMENT\Web_ChatApp\ChatApp.Api\obj\Debug\net10.0\compressed\w4eqiinshd-{0}-amwtk2gsbm-amwtk2gsbm.gz
