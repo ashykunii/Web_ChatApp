@@ -1,4 +1,4 @@
-## Tech Stack — ChatApp
+# Tech Stack — ChatApp
 
 **Architecture:** Clean/onion architecture, 4 projects — `ChatApp.Domain` (entities, enums, repository interfaces) → `ChatApp.Application` (services, DTOs, business logic) → `ChatApp.Infrastructure` (EF Core repositories, Identity) → `ChatApp.Api` (hosting, controllers, hub, static frontend).
 
@@ -15,9 +15,9 @@
 
 ---
 
-# Technology Stack
+## Technology Stack
 
-## ASP.NET Core Web API (.NET 8.0)
+### ASP.NET Core Web API (.NET 8.0)
 
 **Framework:** Built using ASP.NET Core Web API targeting **.NET 8.0**, which provides the HTTP server, dependency injection container, middleware pipeline, authentication, routing, and controller infrastructure.
 
@@ -48,7 +48,7 @@ app.MapControllers();
 
 ---
 
-## Entity Framework Core 8.0
+### Entity Framework Core 8.0
 
 **Package:** `Microsoft.EntityFrameworkCore` together with the SQLite provider `Microsoft.EntityFrameworkCore.Sqlite`.
 
@@ -84,7 +84,7 @@ public DbSet<Group> Groups => Set<Group>();
 
 ---
 
-## SQLite Database
+### SQLite Database
 
 **Provider:** SQLite
 
@@ -122,7 +122,7 @@ SQLite was selected because it is lightweight, portable, requires zero configura
 
 ---
 
-## JWT Bearer Authentication
+### JWT Bearer Authentication
 
 **Package:** `Microsoft.AspNetCore.Authentication.JwtBearer`
 
@@ -157,7 +157,7 @@ For SignalR, the token is supplied through the `access_token` query parameter du
 
 ---
 
-## HTML5
+### HTML5
 
 HTML5 provides the semantic structure of the client application.
 
@@ -175,7 +175,7 @@ HTML acts purely as the presentation structure, while all dynamic behaviour is h
 
 ---
 
-## CSS3
+### CSS3
 
 The frontend styling is implemented entirely using **Vanilla CSS**, without external UI frameworks.
 
@@ -195,7 +195,7 @@ Keeping the styling framework-free reduces bundle size and provides complete con
 
 ---
 
-## JavaScript (ES6+)
+### JavaScript (ES6+)
 
 The frontend logic is written using modern JavaScript without frontend frameworks such as React, Angular, or Vue.
 
@@ -227,7 +227,7 @@ Because the application uses Vanilla JavaScript, all rendering is performed manu
 
 ---
 
-## OpenAPI / Swagger UI
+### OpenAPI / Swagger UI
 
 **Package:** `Swashbuckle.AspNetCore`
 
@@ -254,7 +254,7 @@ The Swagger UI serves as both documentation and a testing environment, simplifyi
 
 ---
 
-## SignalR in depth
+### SignalR 
 
 **Package:** SignalR server is *not* a separate NuGet package here — it comes free as part of the `Microsoft.AspNetCore.App` shared framework (referenced in `ChatApp.Infrastructure.csproj`). The client is the standalone `microsoft-signalr` JS package (v8.0.7) pulled from CDN.
 
